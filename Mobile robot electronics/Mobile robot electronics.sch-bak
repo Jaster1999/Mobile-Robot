@@ -1,0 +1,362 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L power:GND #PWR?
+U 1 1 6073A39F
+P 3350 1200
+F 0 "#PWR?" H 3350 950 50  0001 C CNN
+F 1 "GND" V 3355 1072 50  0000 R CNN
+F 2 "" H 3350 1200 50  0001 C CNN
+F 3 "" H 3350 1200 50  0001 C CNN
+	1    3350 1200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6073BFC2
+P 3350 1800
+F 0 "#PWR?" H 3350 1550 50  0001 C CNN
+F 1 "GND" V 3355 1672 50  0000 R CNN
+F 2 "" H 3350 1800 50  0001 C CNN
+F 3 "" H 3350 1800 50  0001 C CNN
+	1    3350 1800
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6073C1A2
+P 1750 2500
+F 0 "#PWR?" H 1750 2250 50  0001 C CNN
+F 1 "GND" V 1755 2372 50  0000 R CNN
+F 2 "" H 1750 2500 50  0001 C CNN
+F 3 "" H 1750 2500 50  0001 C CNN
+	1    1750 2500
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6073C466
+P 1750 3000
+F 0 "#PWR?" H 1750 2850 50  0001 C CNN
+F 1 "+5V" V 1765 3128 50  0000 L CNN
+F 2 "" H 1750 3000 50  0001 C CNN
+F 3 "" H 1750 3000 50  0001 C CNN
+	1    1750 3000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Motor_driver:BD65496MUV U?
+U 1 1 6073E679
+P 4600 1100
+F 0 "U?" H 4950 1265 50  0000 C CNN
+F 1 "BD65496MUV" H 4950 1174 50  0000 C CNN
+F 2 "" H 4600 1100 50  0001 C CNN
+F 3 "" H 4600 1100 50  0001 C CNN
+	1    4600 1100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Motor_driver:BD65496MUV U?
+U 1 1 6073FBB9
+P 4600 2200
+F 0 "U?" H 4950 2365 50  0000 C CNN
+F 1 "BD65496MUV" H 4950 2274 50  0000 C CNN
+F 2 "" H 4600 2200 50  0001 C CNN
+F 3 "" H 4600 2200 50  0001 C CNN
+	1    4600 2200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Motor_driver:BD65496MUV U?
+U 1 1 60740246
+P 6000 1100
+F 0 "U?" H 6350 1265 50  0000 C CNN
+F 1 "BD65496MUV" H 6350 1174 50  0000 C CNN
+F 2 "" H 6000 1100 50  0001 C CNN
+F 3 "" H 6000 1100 50  0001 C CNN
+	1    6000 1100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Motor_driver:BD65496MUV U?
+U 1 1 60740E17
+P 6000 2200
+F 0 "U?" H 6350 2365 50  0000 C CNN
+F 1 "BD65496MUV" H 6350 2274 50  0000 C CNN
+F 2 "" H 6000 2200 50  0001 C CNN
+F 3 "" H 6000 2200 50  0001 C CNN
+	1    6000 2200
+	1    0    0    -1  
+$EndComp
+Text Notes 4550 650  0    50   ~ 0
+Vcc is 3.3V since ESP32 signals are 3.3V
+Text Notes 4550 750  0    50   ~ 0
+Datasheet: https://www.pololu.com/file/0J886/bd65496muv-e.pdf
+Text Notes 4550 850  0    50   ~ 0
+Vin is Vmotor so it needs to be less than 6v since the motor has a max input of 6v
+$Comp
+L power:GND #PWR?
+U 1 1 60741F36
+P 5450 2750
+F 0 "#PWR?" H 5450 2500 50  0001 C CNN
+F 1 "GND" V 5455 2622 50  0000 R CNN
+F 2 "" H 5450 2750 50  0001 C CNN
+F 3 "" H 5450 2750 50  0001 C CNN
+	1    5450 2750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60742B26
+P 6850 2750
+F 0 "#PWR?" H 6850 2500 50  0001 C CNN
+F 1 "GND" V 6855 2622 50  0000 R CNN
+F 2 "" H 6850 2750 50  0001 C CNN
+F 3 "" H 6850 2750 50  0001 C CNN
+	1    6850 2750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60742CF8
+P 5450 1650
+F 0 "#PWR?" H 5450 1400 50  0001 C CNN
+F 1 "GND" V 5455 1522 50  0000 R CNN
+F 2 "" H 5450 1650 50  0001 C CNN
+F 3 "" H 5450 1650 50  0001 C CNN
+	1    5450 1650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6074363B
+P 6850 1650
+F 0 "#PWR?" H 6850 1400 50  0001 C CNN
+F 1 "GND" V 6855 1522 50  0000 R CNN
+F 2 "" H 6850 1650 50  0001 C CNN
+F 3 "" H 6850 1650 50  0001 C CNN
+	1    6850 1650
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6800 1600 6800 1650
+Wire Wire Line
+	6850 1650 6800 1650
+Connection ~ 6800 1650
+Wire Wire Line
+	6800 1650 6800 1700
+Wire Wire Line
+	6800 2700 6800 2750
+Wire Wire Line
+	6800 2750 6850 2750
+Connection ~ 6800 2750
+Wire Wire Line
+	6800 2750 6800 2800
+Wire Wire Line
+	5400 2700 5400 2750
+Wire Wire Line
+	5400 2750 5450 2750
+Connection ~ 5400 2750
+Wire Wire Line
+	5400 2750 5400 2800
+Wire Wire Line
+	5400 1600 5400 1650
+Wire Wire Line
+	5400 1650 5450 1650
+Connection ~ 5400 1650
+Wire Wire Line
+	5400 1650 5400 1700
+$Comp
+L ESP32-DEVKITC-32D:ESP32-DEVKITC-32D U?
+U 1 1 60738593
+P 2550 2100
+F 0 "U?" H 2550 3267 50  0000 C CNN
+F 1 "ESP32-DEVKITC-32D" H 2550 3176 50  0000 C CNN
+F 2 "MODULE_ESP32-DEVKITC-32D" H 2550 2100 50  0001 L BNN
+F 3 "" H 2550 2100 50  0001 L BNN
+F 4 "Espressif Systems" H 2550 2100 50  0001 L BNN "MANUFACTURER"
+F 5 "4" H 2550 2100 50  0001 L BNN "PARTREV"
+	1    2550 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 60747A00
+P 1750 1200
+F 0 "#PWR?" H 1750 1050 50  0001 C CNN
+F 1 "+3.3V" V 1765 1328 50  0000 L CNN
+F 2 "" H 1750 1200 50  0001 C CNN
+F 3 "" H 1750 1200 50  0001 C CNN
+	1    1750 1200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 6074801F
+P 5400 1200
+F 0 "#PWR?" H 5400 1050 50  0001 C CNN
+F 1 "+3.3V" V 5415 1328 50  0000 L CNN
+F 2 "" H 5400 1200 50  0001 C CNN
+F 3 "" H 5400 1200 50  0001 C CNN
+	1    5400 1200
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 6074959B
+P 5400 2300
+F 0 "#PWR?" H 5400 2150 50  0001 C CNN
+F 1 "+3.3V" V 5415 2428 50  0000 L CNN
+F 2 "" H 5400 2300 50  0001 C CNN
+F 3 "" H 5400 2300 50  0001 C CNN
+	1    5400 2300
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 60749F5D
+P 6800 2300
+F 0 "#PWR?" H 6800 2150 50  0001 C CNN
+F 1 "+3.3V" V 6815 2428 50  0000 L CNN
+F 2 "" H 6800 2300 50  0001 C CNN
+F 3 "" H 6800 2300 50  0001 C CNN
+	1    6800 2300
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 6074A8E0
+P 6800 1200
+F 0 "#PWR?" H 6800 1050 50  0001 C CNN
+F 1 "+3.3V" V 6815 1328 50  0000 L CNN
+F 2 "" H 6800 1200 50  0001 C CNN
+F 3 "" H 6800 1200 50  0001 C CNN
+	1    6800 1200
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074B829
+P 5400 1300
+F 0 "#PWR?" H 5400 1150 50  0001 C CNN
+F 1 "+5V" V 5415 1428 50  0000 L CNN
+F 2 "" H 5400 1300 50  0001 C CNN
+F 3 "" H 5400 1300 50  0001 C CNN
+	1    5400 1300
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074C91F
+P 5400 2400
+F 0 "#PWR?" H 5400 2250 50  0001 C CNN
+F 1 "+5V" V 5415 2528 50  0000 L CNN
+F 2 "" H 5400 2400 50  0001 C CNN
+F 3 "" H 5400 2400 50  0001 C CNN
+	1    5400 2400
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074D5A9
+P 6800 2400
+F 0 "#PWR?" H 6800 2250 50  0001 C CNN
+F 1 "+5V" V 6815 2528 50  0000 L CNN
+F 2 "" H 6800 2400 50  0001 C CNN
+F 3 "" H 6800 2400 50  0001 C CNN
+	1    6800 2400
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074E112
+P 6800 1300
+F 0 "#PWR?" H 6800 1150 50  0001 C CNN
+F 1 "+5V" V 6815 1428 50  0000 L CNN
+F 2 "" H 6800 1300 50  0001 C CNN
+F 3 "" H 6800 1300 50  0001 C CNN
+	1    6800 1300
+	0    1    1    0   
+$EndComp
+Text GLabel 5400 1400 2    50   Input ~ 0
+Motor1A
+Text GLabel 5400 1500 2    50   Input ~ 0
+Motor1B
+Text GLabel 6800 1400 2    50   Input ~ 0
+Motor2A
+Text GLabel 6800 1500 2    50   Input ~ 0
+Motor2B
+Text GLabel 6800 2600 2    50   Input ~ 0
+Motor4B
+Text GLabel 5400 2600 2    50   Input ~ 0
+Motor3B
+Text GLabel 5400 2500 2    50   Input ~ 0
+Motor3A
+Text GLabel 6800 2500 2    50   Input ~ 0
+Motor4A
+$Comp
+L Connector:Conn_01x06_Male J?
+U 1 1 607523FA
+P 8600 1350
+F 0 "J?" H 8708 1731 50  0000 C CNN
+F 1 "Conn_01x06_Male" H 8708 1640 50  0000 C CNN
+F 2 "" H 8600 1350 50  0001 C CNN
+F 3 "~" H 8600 1350 50  0001 C CNN
+	1    8600 1350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x06_Male J?
+U 1 1 60757447
+P 9900 1350
+F 0 "J?" H 10008 1731 50  0000 C CNN
+F 1 "Conn_01x06_Male" H 10008 1640 50  0000 C CNN
+F 2 "" H 9900 1350 50  0001 C CNN
+F 3 "~" H 9900 1350 50  0001 C CNN
+	1    9900 1350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x06_Male J?
+U 1 1 60758072
+P 8600 2100
+F 0 "J?" H 8708 2481 50  0000 C CNN
+F 1 "Conn_01x06_Male" H 8708 2390 50  0000 C CNN
+F 2 "" H 8600 2100 50  0001 C CNN
+F 3 "~" H 8600 2100 50  0001 C CNN
+	1    8600 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x06_Male J?
+U 1 1 60758D41
+P 9900 2100
+F 0 "J?" H 10008 2481 50  0000 C CNN
+F 1 "Conn_01x06_Male" H 10008 2390 50  0000 C CNN
+F 2 "" H 9900 2100 50  0001 C CNN
+F 3 "~" H 9900 2100 50  0001 C CNN
+	1    9900 2100
+	1    0    0    -1  
+$EndComp
+Text Notes 8800 1000 0    50   ~ 0
+motor 1
+Text Notes 10100 1000 0    50   ~ 0
+motor 2\n
+Text Notes 8800 1750 0    50   ~ 0
+motor 3
+Text Notes 10100 1750 0    50   ~ 0
+motor 4
+$EndSCHEMATC

@@ -4,11 +4,11 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title ""
-Date ""
-Rev ""
+Title "Mobile Robot"
+Date "2021-04-12"
+Rev "V1.0"
 Comp ""
-Comment1 ""
+Comment1 "Author: Stanley Jackson"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -16,45 +16,45 @@ $EndDescr
 $Comp
 L power:GND #PWR?
 U 1 1 6073A39F
-P 3350 1200
-F 0 "#PWR?" H 3350 950 50  0001 C CNN
-F 1 "GND" V 3355 1072 50  0000 R CNN
-F 2 "" H 3350 1200 50  0001 C CNN
-F 3 "" H 3350 1200 50  0001 C CNN
-	1    3350 1200
+P 2650 1200
+F 0 "#PWR?" H 2650 950 50  0001 C CNN
+F 1 "GND" V 2655 1072 50  0000 R CNN
+F 2 "" H 2650 1200 50  0001 C CNN
+F 3 "" H 2650 1200 50  0001 C CNN
+	1    2650 1200
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 6073BFC2
-P 3350 1800
-F 0 "#PWR?" H 3350 1550 50  0001 C CNN
-F 1 "GND" V 3355 1672 50  0000 R CNN
-F 2 "" H 3350 1800 50  0001 C CNN
-F 3 "" H 3350 1800 50  0001 C CNN
-	1    3350 1800
+P 2650 1800
+F 0 "#PWR?" H 2650 1550 50  0001 C CNN
+F 1 "GND" V 2655 1672 50  0000 R CNN
+F 2 "" H 2650 1800 50  0001 C CNN
+F 3 "" H 2650 1800 50  0001 C CNN
+	1    2650 1800
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 6073C1A2
-P 1750 2500
-F 0 "#PWR?" H 1750 2250 50  0001 C CNN
-F 1 "GND" V 1755 2372 50  0000 R CNN
-F 2 "" H 1750 2500 50  0001 C CNN
-F 3 "" H 1750 2500 50  0001 C CNN
-	1    1750 2500
+P 1050 2500
+F 0 "#PWR?" H 1050 2250 50  0001 C CNN
+F 1 "GND" V 1055 2372 50  0000 R CNN
+F 2 "" H 1050 2500 50  0001 C CNN
+F 3 "" H 1050 2500 50  0001 C CNN
+	1    1050 2500
 	0    1    1    0   
 $EndComp
 $Comp
 L power:+5V #PWR?
 U 1 1 6073C466
-P 1750 3000
-F 0 "#PWR?" H 1750 2850 50  0001 C CNN
-F 1 "+5V" V 1765 3128 50  0000 L CNN
-F 2 "" H 1750 3000 50  0001 C CNN
-F 3 "" H 1750 3000 50  0001 C CNN
-	1    1750 3000
+P 1050 3000
+F 0 "#PWR?" H 1050 2850 50  0001 C CNN
+F 1 "+5V" V 1065 3128 50  0000 L CNN
+F 2 "" H 1050 3000 50  0001 C CNN
+F 3 "" H 1050 3000 50  0001 C CNN
+	1    1050 3000
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -182,25 +182,25 @@ Wire Wire Line
 $Comp
 L ESP32-DEVKITC-32D:ESP32-DEVKITC-32D U?
 U 1 1 60738593
-P 2550 2100
-F 0 "U?" H 2550 3267 50  0000 C CNN
-F 1 "ESP32-DEVKITC-32D" H 2550 3176 50  0000 C CNN
-F 2 "MODULE_ESP32-DEVKITC-32D" H 2550 2100 50  0001 L BNN
-F 3 "" H 2550 2100 50  0001 L BNN
-F 4 "Espressif Systems" H 2550 2100 50  0001 L BNN "MANUFACTURER"
-F 5 "4" H 2550 2100 50  0001 L BNN "PARTREV"
-	1    2550 2100
+P 1850 2100
+F 0 "U?" H 1850 3267 50  0000 C CNN
+F 1 "ESP32-DEVKITC-32D" H 1850 3176 50  0000 C CNN
+F 2 "MODULE_ESP32-DEVKITC-32D" H 1850 2100 50  0001 L BNN
+F 3 "" H 1850 2100 50  0001 L BNN
+F 4 "Espressif Systems" H 1850 2100 50  0001 L BNN "MANUFACTURER"
+F 5 "4" H 1850 2100 50  0001 L BNN "PARTREV"
+	1    1850 2100
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:+3.3V #PWR?
 U 1 1 60747A00
-P 1750 1200
-F 0 "#PWR?" H 1750 1050 50  0001 C CNN
-F 1 "+3.3V" V 1765 1328 50  0000 L CNN
-F 2 "" H 1750 1200 50  0001 C CNN
-F 3 "" H 1750 1200 50  0001 C CNN
-	1    1750 1200
+P 1050 1200
+F 0 "#PWR?" H 1050 1050 50  0001 C CNN
+F 1 "+3.3V" V 1065 1328 50  0000 L CNN
+F 2 "" H 1050 1200 50  0001 C CNN
+F 3 "" H 1050 1200 50  0001 C CNN
+	1    1050 1200
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -679,7 +679,7 @@ F 3 "" H 9050 1950 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Connection ~ 9050 1950
-Text Notes 8000 750  0    50   ~ 0
+Text Notes 8000 850  0    50   ~ 0
 3V3 Zener diodes are needed since the encoders need a Vcc greater than 3.3v\nand the outputs from them are from 0 to Vcc.  The ESP32 pin are not 5v tolerant\nso the Zener diode clamps the encoder data lines at a max of 3.3v
 Text GLabel 4500 1200 0    50   Input ~ 0
 Motor_EN
@@ -757,4 +757,182 @@ Text GLabel 6600 1500 0    50   Input ~ 0
 Motor_2_PWM
 Text GLabel 6600 1600 0    50   Input ~ 0
 Motor_2_DIR
+Text GLabel 1050 1800 0    50   Input ~ 0
+Motor_1_PWM
+Text GLabel 1050 1900 0    50   Input ~ 0
+Motor_1_DIR
+Text GLabel 1050 2000 0    50   Input ~ 0
+Motor_3_PWM
+Text GLabel 1050 2100 0    50   Input ~ 0
+Motor_3_DIR
+Text GLabel 1050 2200 0    50   Input ~ 0
+Motor_2_PWM
+Text GLabel 1050 2300 0    50   Input ~ 0
+Motor_2_DIR
+Text GLabel 1050 2400 0    50   Input ~ 0
+Motor_4_PWM
+Text GLabel 1050 2700 0    50   Input ~ 0
+Motor_4_DIR
+Text GLabel 1050 1600 0    50   Input ~ 0
+Motor_EN
+Wire Notes Line
+	450  3500 11250 3500
+Wire Notes Line
+	3800 450  3800 3500
+Wire Notes Line
+	7950 450  7950 3500
+Text Notes 500  550  0    50   ~ 0
+ESP32 MCU\n
+Text Notes 3850 550  0    50   ~ 0
+Motor Drivers\n
+Text Notes 8000 550  0    50   ~ 0
+Motor Connectors
+Text GLabel 2650 1300 2    50   Input ~ 0
+Encoder_3_A
+Text GLabel 2650 1400 2    50   Input ~ 0
+Encoder_3_B
+Text GLabel 2650 2200 2    50   Input ~ 0
+Encoder_1_A
+Text GLabel 2650 2300 2    50   Input ~ 0
+Encoder_1_B
+Text GLabel 2650 1900 2    50   Input ~ 0
+Encoder_2_A
+Text GLabel 2650 2000 2    50   Input ~ 0
+Encoder_2_B
+Text GLabel 2650 2400 2    50   Input ~ 0
+Encoder_4_A
+Text GLabel 2650 2500 2    50   Input ~ 0
+Encoder_4_B
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074BB3F
+P 1100 4200
+F 0 "J?" H 1208 4481 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 4390 50  0000 C CNN
+F 2 "" H 1100 4200 50  0001 C CNN
+F 3 "~" H 1100 4200 50  0001 C CNN
+	1    1100 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074CDDE
+P 1100 4900
+F 0 "J?" H 1208 5181 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 5090 50  0000 C CNN
+F 2 "" H 1100 4900 50  0001 C CNN
+F 3 "~" H 1100 4900 50  0001 C CNN
+	1    1100 4900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074D5AF
+P 1100 5550
+F 0 "J?" H 1208 5831 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 5740 50  0000 C CNN
+F 2 "" H 1100 5550 50  0001 C CNN
+F 3 "~" H 1100 5550 50  0001 C CNN
+	1    1100 5550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074EC48
+P 1100 6200
+F 0 "J?" H 1208 6481 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 6390 50  0000 C CNN
+F 2 "" H 1100 6200 50  0001 C CNN
+F 3 "~" H 1100 6200 50  0001 C CNN
+	1    1100 6200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074F8CA
+P 1300 4100
+F 0 "#PWR?" H 1300 3950 50  0001 C CNN
+F 1 "+5V" V 1315 4228 50  0000 L CNN
+F 2 "" H 1300 4100 50  0001 C CNN
+F 3 "" H 1300 4100 50  0001 C CNN
+	1    1300 4100
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 607502D2
+P 1300 4800
+F 0 "#PWR?" H 1300 4650 50  0001 C CNN
+F 1 "+5V" V 1315 4928 50  0000 L CNN
+F 2 "" H 1300 4800 50  0001 C CNN
+F 3 "" H 1300 4800 50  0001 C CNN
+	1    1300 4800
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 60750B7D
+P 1300 5450
+F 0 "#PWR?" H 1300 5300 50  0001 C CNN
+F 1 "+5V" V 1315 5578 50  0000 L CNN
+F 2 "" H 1300 5450 50  0001 C CNN
+F 3 "" H 1300 5450 50  0001 C CNN
+	1    1300 5450
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6075120E
+P 1300 6100
+F 0 "#PWR?" H 1300 5950 50  0001 C CNN
+F 1 "+5V" V 1315 6228 50  0000 L CNN
+F 2 "" H 1300 6100 50  0001 C CNN
+F 3 "" H 1300 6100 50  0001 C CNN
+	1    1300 6100
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60751F12
+P 1300 4400
+F 0 "#PWR?" H 1300 4150 50  0001 C CNN
+F 1 "GND" V 1305 4272 50  0000 R CNN
+F 2 "" H 1300 4400 50  0001 C CNN
+F 3 "" H 1300 4400 50  0001 C CNN
+	1    1300 4400
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60752D67
+P 1300 5100
+F 0 "#PWR?" H 1300 4850 50  0001 C CNN
+F 1 "GND" V 1305 4972 50  0000 R CNN
+F 2 "" H 1300 5100 50  0001 C CNN
+F 3 "" H 1300 5100 50  0001 C CNN
+	1    1300 5100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60753442
+P 1300 5750
+F 0 "#PWR?" H 1300 5500 50  0001 C CNN
+F 1 "GND" V 1305 5622 50  0000 R CNN
+F 2 "" H 1300 5750 50  0001 C CNN
+F 3 "" H 1300 5750 50  0001 C CNN
+	1    1300 5750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60753976
+P 1300 6400
+F 0 "#PWR?" H 1300 6150 50  0001 C CNN
+F 1 "GND" V 1305 6272 50  0000 R CNN
+F 2 "" H 1300 6400 50  0001 C CNN
+F 3 "" H 1300 6400 50  0001 C CNN
+	1    1300 6400
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC

@@ -14,22 +14,21 @@
 #endif
 
 //-------------- definitions -------------//
-
 #define FrontLeft_En 35
 #define FrontLeft_Dir 34
 #define FrontLeft_VCC 23
-
 #define FrontRight_En 33
 #define FrontRight_Dir 32
 //#define Motor2_VCC 45
-
 #define RearLeft_En 26
 #define RearLeft_Dir 25
 //#define Motor3_VCC 45
-
 #define RearRight_En 14
 #define RearRight_Dir 27
 //#define Motor4_VCC 45
+
+#define USonicTrig 23
+#define UsonicEcho 22
 
 #define LED 12
 //#define duty 100

@@ -1,7 +1,7 @@
-// ---- Bluetooth control of ESP32 S2
-// ---- written by Knife for Techno weed teams mobile robot 20/04/21
-//To do:    Add bluetooth initialisation
-        //  make motors controllable with bluetooth
+// ---- Bluetooth control of ESP32 DEVKITC V4
+// ---- written by Knife for Techno weed teams mobile robot 21/04/21
+//To do:    
+        //  make motors controllable with bluetooth :: done to an extent
         //  Add direction control with vectors
         //  Add Ultrasonic sensor interfacing
         //  Add Part loaded switch

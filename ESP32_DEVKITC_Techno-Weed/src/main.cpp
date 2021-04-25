@@ -1,7 +1,8 @@
-// ---- Bluetooth control of ESP32 DEVKITC V4
-// ---- written by Knife for Techno weed teams mobile robot 21/04/21
+// ---- Bluetooth control of ESP32 S2
+// ---- written by Knife for Techno weed teams mobile robot 20/04/21
 //To do:    
-        //  make motors controllable with bluetooth :: done to an extent
+//!         Add bluetooth initialisation   Done 
+        //!  make motors controllable with bluetooth Done
         //  Add direction control with vectors
         //  Add Ultrasonic sensor interfacing
         //  Add Part loaded switch
@@ -14,23 +15,24 @@
 #endif
 
 //-------------- definitions -------------//
-#define FrontLeft_En 35
-#define FrontLeft_Dir 34
+
+#define FrontLeft_En 13 //35
+#define FrontLeft_Dir 12 //34
 #define FrontLeft_VCC 23
+
 #define FrontRight_En 33
 #define FrontRight_Dir 32
 //#define Motor2_VCC 45
+
 #define RearLeft_En 26
 #define RearLeft_Dir 25
 //#define Motor3_VCC 45
+
 #define RearRight_En 14
 #define RearRight_Dir 27
 //#define Motor4_VCC 45
 
-#define USonicTrig 23
-#define UsonicEcho 22
-
-#define LED 12
+// #define LED 12
 //#define duty 100
 
 #define STOP '0'
@@ -46,80 +48,82 @@ BluetoothSerial SerialBT;
 
 char Control_sig = STOP;
 volatile int duty = 100;
+int stopduty = 0;
+int freq = 500;
 
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
-  ledcSetup(0,250,8);
-  ledcAttachPin(FrontLeft_En,0);
+  ledcSetup(0,freq,8);
+  ledcAttachPin(FrontLeft_En, 0);
   ledcWrite(0,duty);
 } 
 
 void FrontLeft_CCW() {
   digitalWrite(FrontLeft_Dir,HIGH);
-  ledcSetup(0,250,8);
-  ledcAttachPin(FrontLeft_En,0);
+  ledcSetup(0,freq,8);
+  ledcAttachPin(FrontLeft_En, 0);
   ledcWrite(0,duty);
 }
 
 void FrontLeft_stop() {
   digitalWrite(FrontLeft_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(FrontLeft_En,0);
-  ledcWrite(0,duty);
+  ledcWrite(0,stopduty);
 }
 
 void FrontRight_CW() {
   digitalWrite(FrontRight_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(FrontRight_En,0);
   ledcWrite(0,duty);
 } 
 
 void FrontRight_CCW() {
   digitalWrite(FrontRight_Dir,HIGH);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(FrontRight_En,0);
   ledcWrite(0,duty);
 }
 
 void FrontRight_stop() {
   digitalWrite(FrontRight_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(FrontRight_En,0);
-  ledcWrite(0,duty);
+  ledcWrite(0,stopduty);
 }
 
 void RearLeft_CW() {
   digitalWrite(RearLeft_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(RearLeft_En,0);
   ledcWrite(0,duty);
 } 
 
 void RearLeft_CCW() {
   digitalWrite(RearLeft_Dir,HIGH);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(RearLeft_En,0);
   ledcWrite(0,duty);
 }
 
 void RearLeft_stop() {
   digitalWrite(RearLeft_Dir,LOW);
-  ledcSetup(0,250,8);
-  ledcAttachPin(RearLeft_En,0);
-  ledcWrite(0,duty);
+  // ledcSetup(0,250,8);
+  //ledcAttachPin(RearLeft_En,0);
+  ledcWrite(0,stopduty);
 }
 
 void RearRight_CW() {
   digitalWrite(RearRight_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(RearRight_En,0);
   ledcWrite(0,duty);
 } 
 
 void RearRight_CCW() {
   digitalWrite(RearRight_Dir,HIGH);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(RearRight_En,0);
   ledcWrite(0,duty);
 }
@@ -128,11 +132,12 @@ void RearRight_stop() {
   digitalWrite(RearRight_Dir,LOW);
   ledcSetup(0,250,8);
   ledcAttachPin(RearRight_En,0);
-  ledcWrite(0,duty);
+  ledcWrite(0,stopduty);
 }
 
 //----------- Driving ------------//
 void Left() {
+  //digitalWrite(FrontLeft_VCC, HIGH);
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -140,6 +145,7 @@ void Left() {
 }
 
 void Right() {
+  //digitalWrite(FrontLeft_VCC, HIGH);
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -147,6 +153,7 @@ void Right() {
 }
 
 void Forward() {
+  //digitalWrite(FrontLeft_VCC, HIGH);
   FrontLeft_CCW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -154,6 +161,7 @@ void Forward() {
 }
 
 void Reverse() {
+  //digitalWrite(FrontLeft_VCC, HIGH);
   FrontLeft_CW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -164,6 +172,7 @@ void Stop() {
   FrontRight_stop();
   RearLeft_stop();
   RearRight_stop();
+  //digitalWrite(FrontLeft_VCC, LOW);
   }
 void printMAC(){
   const uint8_t* point = esp_bt_dev_get_address();
@@ -192,7 +201,7 @@ void setup()
   printMAC();
   Serial.println();
 
-  pinMode(LED, OUTPUT); // LED identifier
+  // pinMode(LED, OUTPUT); // LED identifier
 
   pinMode(FrontLeft_En, OUTPUT); // MOtor 1 PWM enable 
   pinMode(FrontLeft_Dir, OUTPUT); // MOtor 1 direction control
@@ -207,7 +216,7 @@ void setup()
   pinMode(RearRight_En, OUTPUT); // MOtor 1 PWM enable 
   pinMode(RearRight_Dir, OUTPUT);
 
-  digitalWrite(LED, LOW);
+  // digitalWrite(LED, LOW);
   digitalWrite(FrontLeft_VCC, HIGH);
 }
  
@@ -222,7 +231,7 @@ void loop()
     Serial.write(Control_sig);
     switch (Control_sig) {
       case STOP:
-        digitalWrite(LED, LOW);
+        // digitalWrite(LED, LOW);
         Serial.println("Stop");
         Stop();
         break;
@@ -230,25 +239,25 @@ void loop()
       case FWD:
         Forward();
         Serial.println("FWD");
-        digitalWrite(LED, HIGH);
+        // digitalWrite(LED, HIGH);
         break;
         
       case RVS:
         Reverse();
         Serial.println("RVS");
-        digitalWrite(LED, LOW);
+        // digitalWrite(LED, LOW);
         break;
         
       case LFT:
         Left();
         Serial.println("LFT");
-        digitalWrite(LED, HIGH);
+        // digitalWrite(LED, HIGH);
         break;
 
       case RGHT:
         Right();
         Serial.println("RIGHT");
-        digitalWrite(LED, LOW);
+        // digitalWrite(LED, LOW);
         break;
 
       case dutyUp:
@@ -258,7 +267,7 @@ void loop()
         }
         Serial.print(" Duty up: ");
         Serial.println(duty);
-        digitalWrite(LED, HIGH);
+        // digitalWrite(LED, HIGH);
         break;
 
       case dutyDown:
@@ -268,7 +277,7 @@ void loop()
         }
         Serial.print(" Duty down: ");
         Serial.println(duty);
-        digitalWrite(LED, LOW);
+        // digitalWrite(LED, LOW);
         break;
         
       default:

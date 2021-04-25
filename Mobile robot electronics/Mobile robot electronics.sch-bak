@@ -180,19 +180,6 @@ Connection ~ 5400 1650
 Wire Wire Line
 	5400 1650 5400 1700
 $Comp
-L ESP32-DEVKITC-32D:ESP32-DEVKITC-32D U?
-U 1 1 60738593
-P 1850 2100
-F 0 "U?" H 1850 3267 50  0000 C CNN
-F 1 "ESP32-DEVKITC-32D" H 1850 3176 50  0000 C CNN
-F 2 "MODULE_ESP32-DEVKITC-32D" H 1850 2100 50  0001 L BNN
-F 3 "" H 1850 2100 50  0001 L BNN
-F 4 "Espressif Systems" H 1850 2100 50  0001 L BNN "MANUFACTURER"
-F 5 "4" H 1850 2100 50  0001 L BNN "PARTREV"
-	1    1850 2100
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:+3.3V #PWR?
 U 1 1 60747A00
 P 1050 1200
@@ -292,21 +279,21 @@ F 3 "" H 7500 1300 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 Text GLabel 5400 1400 2    50   Input ~ 0
-Motor1A
+MotorFLA
 Text GLabel 5400 1500 2    50   Input ~ 0
-Motor1B
+MotorFLB
 Text GLabel 7500 1400 2    50   Input ~ 0
-Motor2A
+MotorFRA
 Text GLabel 7500 1500 2    50   Input ~ 0
-Motor2B
+MotorFRB
 Text GLabel 7500 2600 2    50   Input ~ 0
-Motor4B
+MotorBRB
 Text GLabel 5400 2600 2    50   Input ~ 0
-Motor3B
+MotorBLB
 Text GLabel 5400 2500 2    50   Input ~ 0
-Motor3A
+MotorBLA
 Text GLabel 7500 2500 2    50   Input ~ 0
-Motor4A
+MotorBRA
 $Comp
 L Connector:Conn_01x06_Male J?
 U 1 1 607523FA
@@ -352,29 +339,13 @@ F 3 "~" H 9950 2600 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Text Notes 8800 950  0    50   ~ 0
-motor 1
+motor FL
 Text Notes 10100 950  0    50   ~ 0
-motor 2\n
+motor FR\n
 Text Notes 8850 2250 0    50   ~ 0
-motor 3
+motor BL
 Text Notes 10150 2250 0    50   ~ 0
-motor 4
-Text GLabel 8800 1100 2    50   Input ~ 0
-Motor1A
-Text GLabel 8800 1200 2    50   Input ~ 0
-Motor1B
-Text GLabel 8850 2500 2    50   Input ~ 0
-Motor3B
-Text GLabel 8850 2400 2    50   Input ~ 0
-Motor3A
-Text GLabel 10150 2500 2    50   Input ~ 0
-Motor4B
-Text GLabel 10150 2400 2    50   Input ~ 0
-Motor4A
-Text GLabel 10100 1100 2    50   Input ~ 0
-Motor2A
-Text GLabel 10100 1200 2    50   Input ~ 0
-Motor2B
+motor BR
 $Comp
 L power:GND #PWR?
 U 1 1 6075BC4E
@@ -742,38 +713,16 @@ F 3 "" H 6600 2800 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 Text GLabel 4500 1500 0    50   Input ~ 0
-Motor_1_PWM
+Motor_FL_PWM
 Text GLabel 4500 1600 0    50   Input ~ 0
-Motor_1_DIR
+Motor_FL_DIR
 Text GLabel 4500 2600 0    50   Input ~ 0
-Motor_3_PWM
+Motor_BL_PWM
 Text GLabel 4500 2700 0    50   Input ~ 0
-Motor_3_DIR
-Text GLabel 6600 2600 0    50   Input ~ 0
-Motor_4_PWM
-Text GLabel 6600 2700 0    50   Input ~ 0
-Motor_4_DIR
+Motor_BL_DIR
 Text GLabel 6600 1500 0    50   Input ~ 0
-Motor_2_PWM
-Text GLabel 6600 1600 0    50   Input ~ 0
-Motor_2_DIR
-Text GLabel 1050 1800 0    50   Input ~ 0
-Motor_1_PWM
-Text GLabel 1050 1900 0    50   Input ~ 0
-Motor_1_DIR
-Text GLabel 1050 2000 0    50   Input ~ 0
-Motor_3_PWM
-Text GLabel 1050 2100 0    50   Input ~ 0
-Motor_3_DIR
-Text GLabel 1050 2200 0    50   Input ~ 0
-Motor_2_PWM
-Text GLabel 1050 2300 0    50   Input ~ 0
-Motor_2_DIR
-Text GLabel 1050 2400 0    50   Input ~ 0
-Motor_4_PWM
-Text GLabel 1050 2700 0    50   Input ~ 0
-Motor_4_DIR
-Text GLabel 1050 1600 0    50   Input ~ 0
+Motor_FR_PWM
+Text GLabel 1050 1400 0    50   Input ~ 0
 Motor_EN
 Wire Notes Line
 	450  3500 11250 3500
@@ -787,8 +736,6 @@ Text Notes 3850 550  0    50   ~ 0
 Motor Drivers\n
 Text Notes 8000 550  0    50   ~ 0
 Motor Connectors
-Text GLabel 2650 1300 2    50   Input ~ 0
-Encoder_3_A
 Text GLabel 2650 1400 2    50   Input ~ 0
 Encoder_3_B
 Text GLabel 2650 2200 2    50   Input ~ 0
@@ -803,4 +750,176 @@ Text GLabel 2650 2400 2    50   Input ~ 0
 Encoder_4_A
 Text GLabel 2650 2500 2    50   Input ~ 0
 Encoder_4_B
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074BB3F
+P 1100 4200
+F 0 "J?" H 1208 4481 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 4390 50  0000 C CNN
+F 2 "" H 1100 4200 50  0001 C CNN
+F 3 "~" H 1100 4200 50  0001 C CNN
+	1    1100 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074CDDE
+P 1100 4900
+F 0 "J?" H 1208 5181 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 5090 50  0000 C CNN
+F 2 "" H 1100 4900 50  0001 C CNN
+F 3 "~" H 1100 4900 50  0001 C CNN
+	1    1100 4900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074D5AF
+P 1100 5550
+F 0 "J?" H 1208 5831 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 5740 50  0000 C CNN
+F 2 "" H 1100 5550 50  0001 C CNN
+F 3 "~" H 1100 5550 50  0001 C CNN
+	1    1100 5550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Male J?
+U 1 1 6074EC48
+P 1100 6200
+F 0 "J?" H 1208 6481 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 1208 6390 50  0000 C CNN
+F 2 "" H 1100 6200 50  0001 C CNN
+F 3 "~" H 1100 6200 50  0001 C CNN
+	1    1100 6200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6074F8CA
+P 1300 4100
+F 0 "#PWR?" H 1300 3950 50  0001 C CNN
+F 1 "+5V" V 1315 4228 50  0000 L CNN
+F 2 "" H 1300 4100 50  0001 C CNN
+F 3 "" H 1300 4100 50  0001 C CNN
+	1    1300 4100
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 607502D2
+P 1300 4800
+F 0 "#PWR?" H 1300 4650 50  0001 C CNN
+F 1 "+5V" V 1315 4928 50  0000 L CNN
+F 2 "" H 1300 4800 50  0001 C CNN
+F 3 "" H 1300 4800 50  0001 C CNN
+	1    1300 4800
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 60750B7D
+P 1300 5450
+F 0 "#PWR?" H 1300 5300 50  0001 C CNN
+F 1 "+5V" V 1315 5578 50  0000 L CNN
+F 2 "" H 1300 5450 50  0001 C CNN
+F 3 "" H 1300 5450 50  0001 C CNN
+	1    1300 5450
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR?
+U 1 1 6075120E
+P 1300 6100
+F 0 "#PWR?" H 1300 5950 50  0001 C CNN
+F 1 "+5V" V 1315 6228 50  0000 L CNN
+F 2 "" H 1300 6100 50  0001 C CNN
+F 3 "" H 1300 6100 50  0001 C CNN
+	1    1300 6100
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60751F12
+P 1300 4400
+F 0 "#PWR?" H 1300 4150 50  0001 C CNN
+F 1 "GND" V 1305 4272 50  0000 R CNN
+F 2 "" H 1300 4400 50  0001 C CNN
+F 3 "" H 1300 4400 50  0001 C CNN
+	1    1300 4400
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60752D67
+P 1300 5100
+F 0 "#PWR?" H 1300 4850 50  0001 C CNN
+F 1 "GND" V 1305 4972 50  0000 R CNN
+F 2 "" H 1300 5100 50  0001 C CNN
+F 3 "" H 1300 5100 50  0001 C CNN
+	1    1300 5100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60753442
+P 1300 5750
+F 0 "#PWR?" H 1300 5500 50  0001 C CNN
+F 1 "GND" V 1305 5622 50  0000 R CNN
+F 2 "" H 1300 5750 50  0001 C CNN
+F 3 "" H 1300 5750 50  0001 C CNN
+	1    1300 5750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 60753976
+P 1300 6400
+F 0 "#PWR?" H 1300 6150 50  0001 C CNN
+F 1 "GND" V 1305 6272 50  0000 R CNN
+F 2 "" H 1300 6400 50  0001 C CNN
+F 3 "" H 1300 6400 50  0001 C CNN
+	1    1300 6400
+	0    -1   -1   0   
+$EndComp
+Text GLabel 2650 1300 2    50   Input ~ 0
+Encoder_3_A
+Text GLabel 6600 1600 0    50   Input ~ 0
+Motor_FR_DIR
+Text GLabel 6600 2600 0    50   Input ~ 0
+Motor_BR_PWM
+Text GLabel 6600 2700 0    50   Input ~ 0
+Motor_BR_DIR
+Text GLabel 8800 1100 2    50   Input ~ 0
+MotorFLA
+Text GLabel 8800 1200 2    50   Input ~ 0
+MotorFLB
+Text GLabel 8850 2500 2    50   Input ~ 0
+MotorBLB
+Text GLabel 8850 2400 2    50   Input ~ 0
+MotorBLA
+Text GLabel 10150 2500 2    50   Input ~ 0
+MotorBRB
+Text GLabel 10150 2400 2    50   Input ~ 0
+MotorBRA
+Text GLabel 10100 1200 2    50   Input ~ 0
+MotorFRB
+Text GLabel 10100 1100 2    50   Input ~ 0
+MotorFRA
+Text GLabel 1050 1800 0    50   Input ~ 0
+Motor_FL_PWM
+Text GLabel 1050 1900 0    50   Input ~ 0
+Motor_FL_DIR
+Text GLabel 1050 2200 0    50   Input ~ 0
+Motor_FR_PWM
+Text GLabel 1050 2300 0    50   Input ~ 0
+Motor_FR_DIR
+Text GLabel 1050 2000 0    50   Input ~ 0
+Motor_BL_PWM
+Text GLabel 1050 2100 0    50   Input ~ 0
+Motor_BL_DIR
+Text GLabel 1050 2400 0    50   Input ~ 0
+Motor_BR_PWM
+Text GLabel 1050 2600 0    50   Input ~ 0
+Motor_BR_DIR
 $EndSCHEMATC

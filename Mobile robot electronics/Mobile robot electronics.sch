@@ -566,7 +566,7 @@ Text GLabel 4500 2700 0    50   Input ~ 0
 Motor_BL_DIR
 Text GLabel 6600 1500 0    50   Input ~ 0
 Motor_FR_PWM
-Text GLabel 2300 2800 2    50   Input ~ 0
+Text GLabel 1350 1800 0    50   Input ~ 0
 Motor_EN
 Text Notes 500  550  0    50   ~ 0
 ESP32 MCU\n
@@ -574,7 +574,7 @@ Text Notes 3850 550  0    50   ~ 0
 Motor Drivers\n
 Text Notes 8000 550  0    50   ~ 0
 Motor Connectors
-Text GLabel 2300 1600 2    50   Input ~ 0
+Text GLabel 1350 2200 0    50   Input ~ 0
 Encoder_3_B
 Text GLabel 2300 2100 2    50   Input ~ 0
 Encoder_1_A
@@ -668,12 +668,12 @@ $EndComp
 $Comp
 L power:+5V #PWR0137
 U 1 1 6075120E
-P 2400 5700
-F 0 "#PWR0137" H 2400 5550 50  0001 C CNN
-F 1 "+5V" V 2415 5828 50  0000 L CNN
-F 2 "" H 2400 5700 50  0001 C CNN
-F 3 "" H 2400 5700 50  0001 C CNN
-	1    2400 5700
+P 2400 5750
+F 0 "#PWR0137" H 2400 5600 50  0001 C CNN
+F 1 "+5V" V 2415 5878 50  0000 L CNN
+F 2 "" H 2400 5750 50  0001 C CNN
+F 3 "" H 2400 5750 50  0001 C CNN
+	1    2400 5750
 	0    1    1    0   
 $EndComp
 $Comp
@@ -720,7 +720,7 @@ F 3 "" H 2400 6050 50  0001 C CNN
 	1    2400 6050
 	0    -1   -1   0   
 $EndComp
-Text GLabel 2300 1500 2    50   Input ~ 0
+Text GLabel 1350 2300 0    50   Input ~ 0
 Encoder_3_A
 Text GLabel 6600 1600 0    50   Input ~ 0
 Motor_FR_DIR
@@ -748,17 +748,17 @@ Text GLabel 1350 1500 0    50   Input ~ 0
 Motor_FL_PWM
 Text GLabel 1350 1700 0    50   Input ~ 0
 Motor_FL_DIR
-Text GLabel 1350 2200 0    50   Input ~ 0
+Text GLabel 2300 1500 2    50   Input ~ 0
 Motor_FR_PWM
-Text GLabel 1350 2300 0    50   Input ~ 0
+Text GLabel 2300 1600 2    50   Input ~ 0
 Motor_FR_DIR
 Text GLabel 1350 2000 0    50   Input ~ 0
 Motor_BL_PWM
 Text GLabel 1350 2100 0    50   Input ~ 0
 Motor_BL_DIR
-Text GLabel 1350 1800 0    50   Input ~ 0
+Text GLabel 2300 2700 2    50   Input ~ 0
 Motor_BR_PWM
-Text GLabel 1350 1900 0    50   Input ~ 0
+Text GLabel 2300 2800 2    50   Input ~ 0
 Motor_BR_DIR
 $Comp
 L MCU_ESP:ESP32-DevKitc-V4-WROVER U1
@@ -1015,7 +1015,7 @@ Text GLabel 2400 4950 2    50   Input ~ 0
 TRIG_US
 Text GLabel 2400 5850 2    50   Input ~ 0
 TRIG_US
-Text GLabel 2300 2700 2    50   Input ~ 0
+Text GLabel 1350 1900 0    50   Input ~ 0
 TRIG_US
 Text Notes 1200 4600 0    50   ~ 0
 Front sensor\n
@@ -1185,11 +1185,11 @@ Connection ~ 2800 5350
 Wire Wire Line
 	2800 6250 2950 6250
 Connection ~ 2800 6250
-Text GLabel 1350 2600 0    50   Input ~ 0
+Text GLabel 2300 1400 2    50   Input ~ 0
 Front_US
 Text GLabel 1350 2700 0    50   Input ~ 0
 Back_US
-Text GLabel 2300 1400 2    50   Input ~ 0
+Text GLabel 1350 2600 0    50   Input ~ 0
 Left_US
 Text GLabel 2300 2400 2    50   Input ~ 0
 Right_US
@@ -1305,4 +1305,48 @@ Text GLabel 2300 2600 2    50   Input ~ 0
 Load_SW2
 Text GLabel 2300 2500 2    50   Input ~ 0
 Load_SW1
+Text Notes 800  3400 0    50   ~ 0
+Use the onboard regulator of the esp32 devkitc to create thge 3v3 rail.
+Text Notes 800  3550 0    50   ~ 0
+External 5v power supply\n
+Wire Notes Line
+	450  3200 3800 3200
+Text Notes 500  3300 0    50   ~ 0
+Power\n
+$Comp
+L power:GND #PWR0150
+U 1 1 608EA124
+P 1150 3950
+F 0 "#PWR0150" H 1150 3700 50  0001 C CNN
+F 1 "GND" V 1155 3822 50  0000 R CNN
+F 2 "" H 1150 3950 50  0001 C CNN
+F 3 "" H 1150 3950 50  0001 C CNN
+	1    1150 3950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+5V #PWR0151
+U 1 1 608EAA30
+P 1150 4050
+F 0 "#PWR0151" H 1150 3900 50  0001 C CNN
+F 1 "+5V" V 1165 4178 50  0000 L CNN
+F 2 "" H 1150 4050 50  0001 C CNN
+F 3 "" H 1150 4050 50  0001 C CNN
+	1    1150 4050
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x03 J11
+U 1 1 608EC567
+P 950 3950
+F 0 "J11" H 868 3625 50  0000 C CNN
+F 1 "Conn_01x03" H 868 3716 50  0000 C CNN
+F 2 "Connector_BarrelJack:BarrelJack_Horizontal" H 950 3950 50  0001 C CNN
+F 3 "~" H 950 3950 50  0001 C CNN
+	1    950  3950
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	1150 3850 1150 3950
+Connection ~ 1150 3950
 $EndSCHEMATC

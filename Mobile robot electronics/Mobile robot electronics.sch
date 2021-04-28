@@ -1349,4 +1349,37 @@ $EndComp
 Wire Wire Line
 	1150 3850 1150 3950
 Connection ~ 1150 3950
+$Comp
+L Mechanical:MountingHole H1
+U 1 1 6088D218
+P 8850 4850
+F 0 "H1" H 8950 4896 50  0000 L CNN
+F 1 "MountingHole" H 8950 4805 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4.3mm_M4" H 8850 4850 50  0001 C CNN
+F 3 "~" H 8850 4850 50  0001 C CNN
+	1    8850 4850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H2
+U 1 1 6088D7F9
+P 8850 5050
+F 0 "H2" H 8950 5096 50  0000 L CNN
+F 1 "MountingHole" H 8950 5005 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4.3mm_M4" H 8850 5050 50  0001 C CNN
+F 3 "~" H 8850 5050 50  0001 C CNN
+	1    8850 5050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H3
+U 1 1 6088E0B9
+P 8850 5250
+F 0 "H3" H 8950 5296 50  0000 L CNN
+F 1 "MountingHole" H 8950 5205 50  0000 L CNN
+F 2 "MountingHole:MountingHole_4.3mm_M4" H 8850 5250 50  0001 C CNN
+F 3 "~" H 8850 5250 50  0001 C CNN
+	1    8850 5250
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

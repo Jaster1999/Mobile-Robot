@@ -138,10 +138,10 @@ void RearRight_stop() {
 //----------- Driving ------------//
 void Left() {
   //digitalWrite(FrontLeft_VCC, HIGH);
-  FrontLeft_CCW();
-  FrontRight_CCW();
-  RearLeft_CW();
-  RearRight_CW();
+  FrontLeft_CW();
+  FrontRight_CW();
+  RearLeft_CCW();
+  RearRight_CCW();
 }
 
 void Right() {

@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 16)
+    (drawings 20)
     (tracks 328)
     (zones 0)
     (modules 45)
@@ -2159,6 +2159,18 @@
       (net 23 MotorBRA))
   )
 
+  (gr_text "A  B  G  V  EA EB\n" (at 121.158 97.282 -90) (layer F.SilkS) (tstamp 608BDFAC)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (gr_text "A  B  G  V  EA EB\n" (at 120.904 56.388 -90) (layer F.SilkS) (tstamp 608BDFAC)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (gr_text "A  B  G  V  EA EB\n" (at 35.052 56.134 -90) (layer F.SilkS) (tstamp 608BDFAC)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (gr_text "A  B  G  V  EA EB\n" (at 35.052 100.584 -90) (layer F.SilkS)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
   (gr_text "V Trig Echo Gnd" (at 121.158 78.486 270) (layer F.SilkS) (tstamp 608B7DB6)
     (effects (font (size 1 1) (thickness 0.15)))
   )

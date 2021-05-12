@@ -225,7 +225,7 @@ void loop()
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
-  
+  SerialBT.println("chur");
   if (SerialBT.available()) {
    char Control_sig = SerialBT.read();
     Serial.write(Control_sig);

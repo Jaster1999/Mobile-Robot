@@ -16,24 +16,36 @@
 
 //-------------- definitions -------------//
 
-#define FrontLeft_En 13 //35
-#define FrontLeft_Dir 12 //34
-#define FrontLeft_VCC 23
+#define FrontLeft_En 13
+#define FrontLeft_Dir 12 
+#define Motor_EN 14
 
-#define FrontRight_En 33
-#define FrontRight_Dir 32
-//#define Motor2_VCC 45
+#define FrontRight_En 2
+#define FrontRight_Dir 0
 
 #define RearLeft_En 26
 #define RearLeft_Dir 25
-//#define Motor3_VCC 45
 
-#define RearRight_En 14
-#define RearRight_Dir 27
-//#define Motor4_VCC 45
+#define RearRight_En 22
+#define RearRight_Dir 23
 
-// #define LED 12
-//#define duty 100
+#define Trig_US 27
+#define Left_US 39
+#define Back_US 36
+#define Front_US 15
+#define Right_US 21
+
+#define Load_SW1 3
+#define Load_SW2 1
+
+#define Encoder_1_A 18
+#define Encoder_1_B 19
+#define Encoder_2_A 26
+#define Encoder_2_B 5
+#define Encoder_3_A 32
+#define Encoder_3_B 33
+#define Encoder_4_A 35
+#define Encoder_4_B 34
 
 #define STOP '0'
 #define FWD 'W' 
@@ -49,7 +61,7 @@ BluetoothSerial SerialBT;
 char Control_sig = STOP;
 volatile int duty = 100;
 int stopduty = 0;
-int freq = 500;
+int freq = 5000;
 
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
@@ -130,14 +142,18 @@ void RearRight_CCW() {
 
 void RearRight_stop() {
   digitalWrite(RearRight_Dir,LOW);
-  ledcSetup(0,250,8);
+  ledcSetup(0,freq,8);
   ledcAttachPin(RearRight_En,0);
   ledcWrite(0,stopduty);
+}
+void Motor_Controller() {
+  ledcSetup(0,freq,8);
+  ledcWrite(0,duty);
 }
 
 //----------- Driving ------------//
 void Left() {
-  //digitalWrite(FrontLeft_VCC, HIGH);
+  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -145,7 +161,7 @@ void Left() {
 }
 
 void Right() {
-  //digitalWrite(FrontLeft_VCC, HIGH);
+  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -153,7 +169,7 @@ void Right() {
 }
 
 void Forward() {
-  //digitalWrite(FrontLeft_VCC, HIGH);
+  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CCW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -161,7 +177,7 @@ void Forward() {
 }
 
 void Reverse() {
-  //digitalWrite(FrontLeft_VCC, HIGH);
+  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -172,7 +188,7 @@ void Stop() {
   FrontRight_stop();
   RearLeft_stop();
   RearRight_stop();
-  //digitalWrite(FrontLeft_VCC, LOW);
+  //digitalWrite(Motor_EN, LOW);
   }
 void printMAC(){
   const uint8_t* point = esp_bt_dev_get_address();
@@ -205,7 +221,7 @@ void setup()
 
   pinMode(FrontLeft_En, OUTPUT); // MOtor 1 PWM enable 
   pinMode(FrontLeft_Dir, OUTPUT); // MOtor 1 direction control
-  pinMode(FrontLeft_VCC,OUTPUT);  // Mode select
+  pinMode(Motor_EN,OUTPUT);  // Mode select
 
   pinMode(FrontRight_En, OUTPUT); // MOtor 1 PWM enable 
   pinMode(FrontRight_Dir, OUTPUT);
@@ -217,7 +233,7 @@ void setup()
   pinMode(RearRight_Dir, OUTPUT);
 
   // digitalWrite(LED, LOW);
-  digitalWrite(FrontLeft_VCC, HIGH);
+  digitalWrite(Motor_EN, HIGH);
 }
  
 void loop()
@@ -225,7 +241,7 @@ void loop()
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
-  SerialBT.println("chur");
+  //SerialBT.println("chur");
   if (SerialBT.available()) {
    char Control_sig = SerialBT.read();
     Serial.write(Control_sig);
@@ -262,12 +278,12 @@ void loop()
 
       case dutyUp:
         duty = duty + 10;
-        if (duty >= 255){ // cap the duty value
-          duty = 255;
+        if (duty >= 256){ // cap the duty value
+          duty = 256;
         }
+        Motor_Controller();
         Serial.print(" Duty up: ");
         Serial.println(duty);
-        // digitalWrite(LED, HIGH);
         break;
 
       case dutyDown:
@@ -275,9 +291,9 @@ void loop()
         if (duty <= 50){ // motors dont seem to handle low duty 
           duty = 50;
         }
+        Motor_Controller();
         Serial.print(" Duty down: ");
         Serial.println(duty);
-        // digitalWrite(LED, LOW);
         break;
         
       default:

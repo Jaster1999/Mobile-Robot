@@ -232,7 +232,6 @@ void setup()
   pinMode(RearRight_En, OUTPUT); // MOtor 1 PWM enable 
   pinMode(RearRight_Dir, OUTPUT);
 
-  // digitalWrite(LED, LOW);
   digitalWrite(Motor_EN, HIGH);
 }
  
@@ -241,13 +240,11 @@ void loop()
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
-  //SerialBT.println("chur");
   if (SerialBT.available()) {
    char Control_sig = SerialBT.read();
     Serial.write(Control_sig);
     switch (Control_sig) {
       case STOP:
-        // digitalWrite(LED, LOW);
         Serial.println("Stop");
         Stop();
         break;
@@ -255,25 +252,21 @@ void loop()
       case FWD:
         Forward();
         Serial.println("FWD");
-        // digitalWrite(LED, HIGH);
         break;
         
       case RVS:
         Reverse();
         Serial.println("RVS");
-        // digitalWrite(LED, LOW);
         break;
         
       case LFT:
         Left();
         Serial.println("LFT");
-        // digitalWrite(LED, HIGH);
         break;
 
       case RGHT:
         Right();
         Serial.println("RIGHT");
-        // digitalWrite(LED, LOW);
         break;
 
       case dutyUp:

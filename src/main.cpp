@@ -54,12 +54,16 @@
 #define RGHT 'D'
 #define dutyUp '8'
 #define dutyDown '2'
+#define RotCCW '7'
+#define RotCW '9'
+
+
 
 // --- objects ---//
 BluetoothSerial SerialBT;
 
 char Control_sig = STOP;
-volatile int duty = 100;
+volatile int duty = 115; //starting duty
 int stopduty = 0;
 int freq = 5000;
 
@@ -190,6 +194,22 @@ void Stop() {
   RearRight_stop();
   //digitalWrite(Motor_EN, LOW);
   }
+
+void RotateCW(){
+  FrontLeft_CW();
+  FrontRight_CW();
+  RearLeft_CW();
+  RearRight_CW();
+}
+
+void RotateCCW(){
+  FrontLeft_CCW();
+  FrontRight_CCW();
+  RearLeft_CCW();
+  RearRight_CCW();
+}
+
+
 void printMAC(){
   const uint8_t* point = esp_bt_dev_get_address();
     for (int i = 0; i < 6; i++) {
@@ -268,6 +288,17 @@ void loop()
         Right();
         Serial.println("RIGHT");
         break;
+
+      case RotCW:
+        RotateCW();
+        Serial.println("Rotate CW");
+        break;
+
+      case RotCCW:
+        RotateCCW();
+        Serial.println("Rotate CCW");
+        break;
+
 
       case dutyUp:
         duty = duty + 10;

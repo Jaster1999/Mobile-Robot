@@ -18,7 +18,7 @@ bool connected;
 BluetoothSerial SerialBT;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   //SerialBT.setPin(pin);
   SerialBT.begin("TW_ESP32PC", true); 
   //SerialBT.setPin(pin);

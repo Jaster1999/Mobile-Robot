@@ -32,17 +32,19 @@ void setup() {
   else {
     while(!SerialBT.connected(10000)) {
       Serial.println("Failed to connect. Make sure remote device is available and in range, then restart app."); 
+      connected = SerialBT.connect(address);
     }
   }
-  if (SerialBT.disconnect()) {
-    Serial.println("Disconnected Succesfully!");
-  }
+  // if (SerialBT.disconnect()) {
+  //   Serial.println("Disconnected Succesfully!");
+  // }
   SerialBT.connect();
-
 }
 
 void loop() {
 
+
+  
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }

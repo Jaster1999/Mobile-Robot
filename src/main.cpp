@@ -17,6 +17,7 @@ bool connected;
 //-------------- definitions -------------//
 BluetoothSerial SerialBT;
 
+
 void setup() {
   Serial.begin(115200);
   //SerialBT.setPin(pin);
@@ -42,9 +43,18 @@ void setup() {
 }
 
 void loop() {
-
-
+  if (!SerialBT.connected(1000)){
+    Serial.println("Disconnected!");
+    delay(500);
+    connected = SerialBT.connect(address);
+    if(connected) {
+      Serial.println("Connected Succesfully!");
+  } 
+    delay(500);
+    SerialBT.connect();
+  }
   
+
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }

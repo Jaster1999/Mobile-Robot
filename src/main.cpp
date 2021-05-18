@@ -64,8 +64,20 @@ BluetoothSerial SerialBT;
 
 char Control_sig = STOP;
 volatile int duty = 115; //starting duty
+volatile int interruptCounter;
 int stopduty = 0;
 int freq = 5000;
+
+//----------------- Interrupt 
+hw_timer_t *timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+void IRAM_ATTR onTimer() {
+  portENTER_CRITICAL_ISR(&timerMux);
+  interruptCounter++;
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
+
 
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
@@ -229,7 +241,7 @@ void setup()
 {
   //- -------- Setup Serial comms -------//
  
-  Serial.begin(9600);
+  Serial.begin(115200);
   SerialBT.begin("TechnoWeed ESP32test"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
   Serial.println("Device name: TechnoWeed ESP32test");
@@ -253,6 +265,12 @@ void setup()
   pinMode(RearRight_Dir, OUTPUT);
 
   digitalWrite(Motor_EN, HIGH);
+
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 1000000, true); //(timer, microseconds)
+  timerAlarmEnable(timer);
+
 }
  
 void loop()
@@ -260,8 +278,13 @@ void loop()
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
+
+
   if (SerialBT.available()) {
-   char Control_sig = SerialBT.read();
+    // timerAlarmWrite(timer, 5000000); //set to half a second
+    timerRestart(timer);
+    timerAlarmEnable(timer);
+    char Control_sig = SerialBT.read();
     Serial.write(Control_sig);
     switch (Control_sig) {
       case STOP:
@@ -323,5 +346,16 @@ void loop()
       default:
         break;
     }
+  }
+
+  if (interruptCounter > 0) {
+    portENTER_CRITICAL(&timerMux);
+    interruptCounter--;
+    portEXIT_CRITICAL(&timerMux);
+    // interrupt handling code
+    Serial.println("interrupt");
+    Serial.println("Stop");
+    timerAlarmDisable(timer);
+    Stop();
   }
 }

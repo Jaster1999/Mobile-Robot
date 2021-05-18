@@ -26,8 +26,7 @@ def HSV_filter(img, lower, upper):
 def nothing(x): # function call for when sliders are moved, does nothing
     pass
 
-def calibrate(img): # function to calibrate various filters, you just get the values and have to manually set them in main
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def calibrate(camera): # function to calibrate various filters, you just get the values and have to manually set them in main
     cv2.namedWindow('masking') # Creating slidebar window
 
     # Making all the slidebars to calibrate filter
@@ -39,6 +38,9 @@ def calibrate(img): # function to calibrate various filters, you just get the va
     cv2.createTrackbar('VHigher','masking',255,255,nothing)
     mask = []
     while(1):
+        _,img = camera.read()
+        img = cv2.flip(img,1)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         hL = cv2.getTrackbarPos('HLower','masking')
         hH = cv2.getTrackbarPos('HHigher','masking')
         sL = cv2.getTrackbarPos('SLower','masking')
@@ -55,14 +57,13 @@ def calibrate(img): # function to calibrate various filters, you just get the va
         cv2.imshow("Inv white mask", mask)
         cv2.imshow("Mask", res)
         if cv2.waitKey(10) & 0xFF == ord('d'):
-            camera.release()
             cv2.destroyAllWindows()
             break
     return (hL, hH, sL, sH, vL, vH)
 
 
 def getpos(mask):
-    contours, hierarchy = cv2.findContours(dilated_rob_mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     # calculate moments for each contour
     c = contours[0]
     M = cv2.moments(c)
@@ -74,7 +75,18 @@ def getpos(mask):
 def getangle(pos1, pos2):
     xdif = pos2[0]-pos1[0]
     ydif = pos2[1]-pos1[1]
-    angle_rad = math.atan(xdif/ydif)
+    if(xdif or ydif != 0):
+        angle_rad = -math.atan2(-xdif, ydif)
+    elif(xdif == 0 and ydif > 0):
+        angle_rad = 0
+    elif(xidf == 0 and ydif<0):
+        angle_rad = math.pi
+    elif(ydif == 0 and xdif > 0):
+        angle_rad = math.pi/2
+    elif(ydif == 0 and xdif < 0):
+        angle_rad = -(math.pi/2)
+    #if(angle_rad<0):
+     #   angle_rad += 2*math.pi
     return math.degrees(angle_rad)
 
 
@@ -126,15 +138,13 @@ def astar(array, start, goal):
 
 def main():
     camera = cv2.VideoCapture(2)
-    _,img = camera.read()
-    img = cv2.flip(img,1)
 
     # Calibrate the filters
     print("Calibrate?")
     resp = input("y/n?")
     if(resp.lower() == 'y'):
-        print("Background filter", calibrate(img))
-        print("Robot filter", calibrate(img))
+        print("Background filter", calibrate(camera))
+        print("Robot filter", calibrate(camera))
 
     # end goal coords
     goal = (63,63)
@@ -143,21 +153,13 @@ def main():
         _,img = camera.read()
         img = cv2.flip(img,1)
 
-        # create Background filter
-        lowerRegionBackground = np.array([0, 0, 68],np.uint8)
-        upperRegionBackground = np.array([177, 31, 255],np.uint8)
-        mask, res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
-        eroded_mask = cv2.erode(mask, (7, 7), iterations=3)
-        dilated_mask = cv2.dilate(eroded_mask, (61, 61), iterations=31)
-        cv2.imshow("Dilation adj mask", dilated_mask)
-
         # create dot filter, dot is the blue dot on the robot
-        lowerRegionBackground = np.array([0, 119, 131],np.uint8)
-        upperRegionBackground = np.array([32, 255, 225],np.uint8)
+        lowerRegionBackground = np.array([99, 108, 120],np.uint8)
+        upperRegionBackground = np.array([111, 255, 187],np.uint8)
         dot_mask, dot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
         dot_res=[]
         inv_dot_mask = cv2.bitwise_not(dot_mask) 
-        cv2.imshow("Dilation adj dot_mask", dot_mask)
+        cv2.imshow("Dilation adj dot_mask", inv_dot_mask)
 
         # create robot filter
         lowerRegionBackground = np.array([0, 119, 131],np.uint8)
@@ -165,34 +167,58 @@ def main():
         robot_mask, robot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
         robot_res=[]
         inv_rob_mask = cv2.bitwise_not(robot_mask) 
-        dot_plus_robot_mask = cv2.add(inv_rob_mask, inv_dot_mask)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        dot_plus_robot_mask = cv2.dilate(cv2.add(inv_rob_mask, inv_dot_mask), kernel, iterations=1)
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
         eroded_rob_mask = cv2.erode(inv_rob_mask, (7, 7), iterations=3)
-        dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel, iterations=1)
+        dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel2, iterations=1)
         cv2.imshow("Dilation adj rob_mask", dilated_rob_mask)
 
-        # take the robot out as an object in the background mask
-        combined_mask = cv2.subtract(dilated_mask, dilated_rob_mask) 
-        cv2.imshow("Combined mask", combined_mask)
+        # create Background filter
+        lowerRegionBackground = np.array([0, 0, 69],np.uint8)
+        upperRegionBackground = np.array([177, 42, 255],np.uint8)
+        mask, res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
+        combined_mask = cv2.subtract(mask, dot_plus_robot_mask) 
+        #inv_mask = cv2.bitwise_not(combined_mask)
+        eroded_mask = cv2.erode(combined_mask, (7, 7), iterations=3)
+        dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
+        cv2.imshow("Dilation adj mask", dilated_mask)
+
+
+
+
 
         # find the robot's centre and the blue dot and calculate the robots orientation
-        robot_centre = getpos(robot_mask)
-        cv2.circle(img, robot_centre, 5, (255, 255, 255), -1)
-        cv2.putText(img, "centroid", (robot_centre[0] + 25, robot_centre[1] + 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        cv2.imshow("Image", img)
-        dot_centre = getpos(dot_mask) 
-        current_angle = getangle(robot_centre, dot_centre) # finding the robots angle relative to the camera frame coordinates.
+        try:
+            robot_centre = getpos(dilated_rob_mask)
+            cv2.circle(img, robot_centre, 2, (255, 255, 255), -1)
+            cv2.putText(img, "centroid", (robot_centre[0] + 25, robot_centre[1] + 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            dot_centre = getpos(inv_dot_mask) 
+            cv2.circle(img, dot_centre, 2, (0, 255, 255), -1)
+            cv2.putText(img, "dot centroid", (dot_centre[0] - 25, dot_centre[1] - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            current_angle = getangle(robot_centre, dot_centre) # finding the robots angle relative to the camera frame coordinates.
+            #print(dot_centre, robot_centre)
+        except:
+            #print("Robot lost")
+            current_angle = 0
+        cv2.imshow("dots", img)
+        print(current_angle)
 
         # produce a grid for the astar pathfinder
-        resized_mask = cv2.resize(combined_mask, None, fx=0.1, fy=0.1, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
-        scaled_robotcoords = (int(robot_centre[0]/20), int(robot_centre[1]/20)) # transforming robot coords into grid coord system.
-        print(resized_mask)
-        print(resized_mask.shape)
+        resized_mask = cv2.resize(dilated_mask, None, fx=0.05, fy=0.05, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
+        #scaled_robotcoords = (int(robot_centre[0]/20), int(robot_centre[1]/20)) # transforming robot coords into grid coord system.
         resized_mask[resized_mask!=0]=1 # turning grid into 1's and 0's
-        print(resized_mask)
+        #print(resized_mask)
+        for line in resized_mask:
+            line = str(line)
+            new_line = ''
+            for char in line.split():
+                new_line = new_line+char+", "
+            #print(new_line)
+        #print(resized_mask.shape)
 
         # finding the route, remember to set a real end goal
-        route = astar(resized_mask, scaled_robotcoords, goal)
+        #route = astar(resized_mask, scaled_robotcoords, goal)
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             camera.release()

@@ -62,7 +62,7 @@
 BluetoothSerial SerialBT;
 
 char Control_sig  = STOP;
-volatile int duty = 165; // --- starting duty, 115 wasnt 
+volatile int duty = 120; // --- starting duty, 115 wasnt 
 volatile int interruptCounter   = 0;
 volatile int PART1_LOADED_FLAG  = 0;
 
@@ -172,6 +172,8 @@ void Motor_Controller() {
 
 //----------- Driving ------------//
 void Left() {
+  duty = 120;
+  Motor_Controller();
   FrontLeft_CW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -179,6 +181,8 @@ void Left() {
 }
 
 void Right() {
+  duty = 120;
+  Motor_Controller();
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -186,6 +190,8 @@ void Right() {
 }
 
 void Forward() {
+  duty = 120;
+  Motor_Controller();
   FrontLeft_CCW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -193,6 +199,8 @@ void Forward() {
 }
 
 void Reverse() {
+  duty = 120;
+  Motor_Controller();
   FrontLeft_CW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -206,6 +214,7 @@ void Stop() {
   }
 
 void RotateCW(){
+  duty = 80;
   FrontLeft_CW();
   FrontRight_CW();
   RearLeft_CW();
@@ -213,6 +222,7 @@ void RotateCW(){
 }
 
 void RotateCCW(){
+  duty =  80;
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CCW();
@@ -328,17 +338,20 @@ void loop()
         break;
 
       case RGHT:
+
         Right();
         //Serial.println("RIGHT");
         break;
 
       case RotCW:
         RotateCW();
+        Motor_Controller();
         //Serial.println("Rotate CW");
         break;
 
       case RotCCW:
         RotateCCW();
+        Motor_Controller();
         // Serial.println("Rotate CCW");
         break;
 

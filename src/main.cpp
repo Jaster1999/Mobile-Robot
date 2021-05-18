@@ -61,7 +61,7 @@
 BluetoothSerial SerialBT;
 
 char Control_sig = STOP;
-volatile int duty = 115; //starting duty
+volatile int duty = 125; //starting duty
 volatile int interruptCounter;
 volatile int PART1_LOADED_FLAG = 0;
 //volatile int PART2_LOADED_FLAG = 0;
@@ -291,12 +291,14 @@ void loop()
     // ---- spin around and do a dance
     PART1_LOADED_FLAG = 1;
     Serial.println("part loaded");
+    delay(200);
   }
 
   if ((PART1_LOADED_FLAG == 1) && (digitalRead(Load_SW1)== LOW)){
     Serial.println("part delivered");
     Serial.println("Load next part");
     PART1_LOADED_FLAG = 0;
+    delay(200);
   }
 
   if (Serial.available()) {

@@ -291,7 +291,7 @@ void loop()
 
   if ((PART1_LOADED_FLAG == 1) && (digitalRead(Load_SW1)== LOW)){
     Serial.println("Part delivered load next part");
-    PART1_LOADED_FLAG = 0;
+    //PART1_LOADED_FLAG = 0;
     delay(200);
   }
   // -------------- Generic bluetooth serial code ------------------ //

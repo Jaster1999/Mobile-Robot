@@ -63,10 +63,11 @@ BluetoothSerial SerialBT;
 char Control_sig = STOP;
 volatile int duty = 115; //starting duty
 volatile int interruptCounter;
+volatile int PART1_LOADED_FLAG = 0;
+volatile int PART2_LOADED_FLAG = 0;
 int stopduty = 0;
 int freq = 5000;
 
-<<<<<<< Updated upstream
 //----------------- Interrupt 
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -78,12 +79,6 @@ void IRAM_ATTR onTimer() {
 }
 
 
-=======
-volatile int PART1_LOADED_FLAG = 0;
-volatile int PART2_LOADED_FLAG = 0;
-
-//----------- function defs
->>>>>>> Stashed changes
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
   ledcSetup(0,freq,8);
@@ -245,12 +240,8 @@ void printMAC(){
 void setup()
 {
   //- -------- Setup Serial comms -------//
-<<<<<<< Updated upstream
  
   Serial.begin(115200);
-=======
-  Serial.begin(9600);
->>>>>>> Stashed changes
   SerialBT.begin("TechnoWeed ESP32test"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
   Serial.println("Device name: TechnoWeed ESP32test");
@@ -278,13 +269,10 @@ void setup()
 
   digitalWrite(Motor_EN, HIGH);
 
-<<<<<<< Updated upstream
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 1000000, true); //(timer, microseconds)
   timerAlarmEnable(timer);
-=======
->>>>>>> Stashed changes
 
 }
  

@@ -1,11 +1,11 @@
-// ---- Bluetooth control of ESP32 S2
+// ---- Bluetooth control of ESP32-DEVKITC V4
 // ---- written by Knife for Techno weed teams mobile robot 20/04/21
 //To do:    
-//          Add bluetooth initialisation   Done 
+//          Add bluetooth initialisation ---------- Done 
         //  make motors controllable with bluetooth Done
-        //  Add direction control with vectors
-        //  Add Ultrasonic sensor interfacing
-        //  Add Part loaded switch
+        //  Add direction control ----------------- Done
+        //  Add Ultrasonic sensor interfacing ----- 
+        //  Add Part loaded switch ---------------- Done
         
 #include "BluetoothSerial.h"
 #include "esp_bt_device.h"
@@ -16,69 +16,71 @@
 
 //-------------- definitions -------------//
 
-#define FrontLeft_En 13
+#define FrontLeft_En  13
 #define FrontLeft_Dir 12 
-#define Motor_EN 14
+#define Motor_EN      14
 
-#define FrontRight_En 2
+#define FrontRight_En  2
 #define FrontRight_Dir 0
 
-#define RearLeft_En 26
-#define RearLeft_Dir 25
+#define RearLeft_En   26
+#define RearLeft_Dir  25
 
-#define RearRight_En 22
+#define RearRight_En  22
 #define RearRight_Dir 23
 
-#define Trig_US 27
-#define Left_US 39
-#define Back_US 36
-#define Front_US 15
-//#define Right_US 21
+#define Trig_US       27
+#define Left_US       39
+#define Back_US       36
+#define Front_US      15
+//#define Right_US 21 //Robbed this to add part detection switch pin
 
-#define Load_SW1 21 //3
-#define Load_SW2 1
+#define Load_SW1      21 //3
+#define Load_SW2      1
 
-#define Encoder_1_A 18
-#define Encoder_1_B 19
-#define Encoder_2_A 26
-#define Encoder_2_B 5
-#define Encoder_3_A 32
-#define Encoder_3_B 33
-#define Encoder_4_A 35
-#define Encoder_4_B 34
+#define Encoder_1_A   18
+#define Encoder_1_B   19
+#define Encoder_2_A   26
+#define Encoder_2_B   5
+#define Encoder_3_A   32
+#define Encoder_3_B   33
+#define Encoder_4_A   35
+#define Encoder_4_B   34
 
-#define STOP '0'
-#define FWD 'W' 
-#define RVS 'S' 
-#define LFT 'A'
-#define RGHT 'D'
-#define dutyUp '8'
-#define dutyDown '2'
-#define RotCCW '7'
-#define RotCW '9'
+// -------- Define incoming Bluetooth commands -------//
+#define STOP      '0'
+#define FWD       'W' 
+#define RVS       'S' 
+#define LFT       'A'
+#define RGHT      'D'
+#define dutyUp    '8'
+#define dutyDown  '2'
+#define RotCCW    '7'
+#define RotCW     '9'
 
 // --- objects ---//
 BluetoothSerial SerialBT;
 
-char Control_sig = STOP;
-volatile int duty = 125; //starting duty
+char Control_sig  = STOP;
+volatile int duty = 125; // --- starting duty
 volatile int interruptCounter;
 volatile int PART1_LOADED_FLAG = 0;
-//volatile int PART2_LOADED_FLAG = 0;
-int stopduty = 0;
-int freq = 5000;
 
-//----------------- Interrupt 
+int stopduty  = 0;
+int freq      = 5000;
+
+//----------------- Interrupt -------------------//
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
+// ------ Timer Overflow ISR
 void IRAM_ATTR onTimer() {
-  portENTER_CRITICAL_ISR(&timerMux);
+  portENTER_CRITICAL_ISR(&timerMux); 
   interruptCounter++;
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
-
+//---------------- Motor Functions -------------//
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
   ledcSetup(0,freq,8);
@@ -162,6 +164,7 @@ void RearRight_stop() {
   ledcAttachPin(RearRight_En,0);
   ledcWrite(0,stopduty);
 }
+
 void Motor_Controller() {
   ledcSetup(0,freq,8);
   ledcWrite(0,duty);
@@ -169,7 +172,6 @@ void Motor_Controller() {
 
 //----------- Driving ------------//
 void Left() {
-  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -177,7 +179,6 @@ void Left() {
 }
 
 void Right() {
-  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -185,7 +186,6 @@ void Right() {
 }
 
 void Forward() {
-  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CCW();
   FrontRight_CW();
   RearLeft_CCW();
@@ -193,7 +193,6 @@ void Forward() {
 }
 
 void Reverse() {
-  //digitalWrite(Motor_EN, HIGH);
   FrontLeft_CW();
   FrontRight_CCW();
   RearLeft_CW();
@@ -204,7 +203,6 @@ void Stop() {
   FrontRight_stop();
   RearLeft_stop();
   RearRight_stop();
-  //digitalWrite(Motor_EN, LOW);
   }
 
 void RotateCW(){
@@ -249,8 +247,7 @@ void setup()
   printMAC();
   Serial.println();
 
-  // pinMode(LED, OUTPUT); // LED identifier
-
+  // ------------------- Set Pin Conditions ---------------------- //
   pinMode(FrontLeft_En, OUTPUT); // Motor 1 PWM enable 
   pinMode(FrontLeft_Dir, OUTPUT); // Motor 1 direction control
   pinMode(Motor_EN,OUTPUT);  // Mode select
@@ -269,47 +266,44 @@ void setup()
 
   digitalWrite(Motor_EN, HIGH);
 
-  timer = timerBegin(0, 80, true);
+  // ------------------------ Timer Init -----------------------------//
+  // timer clock is default set to 80 MHz
+  timer = timerBegin(0, 80, true);  // 80 is the prescaler so timer is running at 1MHz 
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 1200000, true); //(timer, microseconds)
+  timerAlarmWrite(timer, 1200000, true); // (timer, microseconds)
   timerAlarmEnable(timer);
-
 }
  
 void loop()
 {
-  //------------------ Part detection 
+  // ------------------ Part detection ----------------------- //
   if (PART1_LOADED_FLAG == 0){
     Serial.println("part unloaded");
     while (digitalRead(Load_SW1) == LOW){
-      // Serial.println("Put a part on brah!!!");
       // wait for part to be loaded
     }
-      Serial.print("Loaded sw1 state = ");
-      Serial.println(digitalRead(Load_SW1));
-    // ---- part 1 loaded
-    // ---- spin around and do a dance
+      // Serial.print("Loaded sw1 state = ");
+      // Serial.println(digitalRead(Load_SW1));
     PART1_LOADED_FLAG = 1;
-    Serial.println("part loaded");
+    Serial.println("Part loaded");
     delay(200);
   }
 
   if ((PART1_LOADED_FLAG == 1) && (digitalRead(Load_SW1)== LOW)){
-    Serial.println("part delivered");
-    Serial.println("Load next part");
+    Serial.println("Part delivered load next part");
     PART1_LOADED_FLAG = 0;
     delay(200);
   }
-
+  // -------------- Generic bluetooth serial code ------------------ //
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
 
-
+  // ------------- Incoming Bluetooth Handling --------------------- //
   if (SerialBT.available()) {
-    // timerAlarmWrite(timer, 5000000); //set to half a second
-    timerRestart(timer);
-    timerAlarmEnable(timer);
+    // timerAlarmWrite(timer, 1000000); //set to half a second, this isnt resetting the timer
+    timerRestart(timer);      // ------------- when a bluetooth command comes in timer 1 is reset
+    timerAlarmEnable(timer);  // ------------- Hate to be obvious, enable timer bit...
     char Control_sig = SerialBT.read();
     Serial.write(Control_sig);
     switch (Control_sig) {
@@ -320,34 +314,33 @@ void loop()
         
       case FWD:
         Forward();
-        Serial.println("FWD");
+        //Serial.println("FWD");
         break;
         
       case RVS:
         Reverse();
-        Serial.println("RVS");
+        //Serial.println("RVS");
         break;
         
       case LFT:
         Left();
-        Serial.println("LFT");
+        //Serial.println("LFT");
         break;
 
       case RGHT:
         Right();
-        Serial.println("RIGHT");
+        //Serial.println("RIGHT");
         break;
 
       case RotCW:
         RotateCW();
-        Serial.println("Rotate CW");
+        //Serial.println("Rotate CW");
         break;
 
       case RotCCW:
         RotateCCW();
-        Serial.println("Rotate CCW");
+        // Serial.println("Rotate CCW");
         break;
-
 
       case dutyUp:
         duty = duty + 10;
@@ -355,7 +348,7 @@ void loop()
           duty = 256;
         }
         Motor_Controller();
-        Serial.print(" Duty up: ");
+        // Serial.print(" Duty up: ");
         Serial.println(duty);
         break;
 
@@ -365,7 +358,7 @@ void loop()
           duty = 60;
         }
         Motor_Controller();
-        Serial.print(" Duty down: ");
+        // Serial.print(" Duty down: ");
         Serial.println(duty);
         break;
         
@@ -373,14 +366,13 @@ void loop()
         break;
     }
   }
-
+  // --------------------- interrupt handling code ----------------------- //
   if (interruptCounter > 0) {
     portENTER_CRITICAL(&timerMux);
     interruptCounter--;
     portEXIT_CRITICAL(&timerMux);
-    // interrupt handling code
-    Serial.println("interrupt");
-    Serial.println("Stop");
+    // Serial.println("interrupt");
+    // Serial.println("Stop");
     timerAlarmDisable(timer);
     Stop();
   }

@@ -1,0 +1,11 @@
+import math
+
+def get_angle(robot_center, robot_front):
+    angle = 0
+    dx = robot_front[0] - robot_center[0]
+    dy = robot_front[1] - robot_center[1]
+    angle = -math.atan2(-dx, dy) #returns angle in radians
+    if angle<0:
+        angle = 360+angle
+    angle = math.degrees(angle)
+    return angle 

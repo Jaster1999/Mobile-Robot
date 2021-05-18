@@ -33,9 +33,9 @@
 #define Left_US 39
 #define Back_US 36
 #define Front_US 15
-#define Right_US 21
+//#define Right_US 21
 
-#define Load_SW1 3
+#define Load_SW1 21 //3
 #define Load_SW2 1
 
 #define Encoder_1_A 18
@@ -64,7 +64,7 @@ char Control_sig = STOP;
 volatile int duty = 115; //starting duty
 volatile int interruptCounter;
 volatile int PART1_LOADED_FLAG = 0;
-volatile int PART2_LOADED_FLAG = 0;
+//volatile int PART2_LOADED_FLAG = 0;
 int stopduty = 0;
 int freq = 5000;
 
@@ -271,7 +271,7 @@ void setup()
 
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 1000000, true); //(timer, microseconds)
+  timerAlarmWrite(timer, 1200000, true); //(timer, microseconds)
   timerAlarmEnable(timer);
 
 }
@@ -279,14 +279,24 @@ void setup()
 void loop()
 {
   //------------------ Part detection 
-  if (Load_SW1 == HIGH){
-    // ---- part 1 loaded 
+  if (PART1_LOADED_FLAG == 0){
+    Serial.println("part unloaded");
+    while (digitalRead(Load_SW1) == LOW){
+      // Serial.println("Put a part on brah!!!");
+      // wait for part to be loaded
+    }
+      Serial.print("Loaded sw1 state = ");
+      Serial.println(digitalRead(Load_SW1));
+    // ---- part 1 loaded
     // ---- spin around and do a dance
+    PART1_LOADED_FLAG = 1;
+    Serial.println("part loaded");
   }
 
-    if (Load_SW2 == HIGH){
-    // ---- part 2 loaded 
-    // ---- spin around and do a dance
+  if ((PART1_LOADED_FLAG == 1) && (digitalRead(Load_SW1)== LOW)){
+    Serial.println("part delivered");
+    Serial.println("Load next part");
+    PART1_LOADED_FLAG = 0;
   }
 
   if (Serial.available()) {

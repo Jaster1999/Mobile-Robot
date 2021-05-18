@@ -4,6 +4,11 @@ import math
 import heapq
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
+import serial
+import time
+from rich import print
+from rich.progress import Progress
+com_port = 'COM10'
 
 """ 0, 177 for H
 0, 31 for S
@@ -133,6 +138,26 @@ def astar(array, start, goal):
                 heapq.heappush(oheap, (fscore[neighbor], neighbor))
     return False
 
+def generate_command(path, angle, current_pos):
+    msg = ' '
+    if(len(path) == 1):
+        return msg
+    else:
+        if angle>10 and angle <= 180:
+            msg = "7"
+        elif angle<350 and angle > 180:
+            msg = "9"
+        elif path[0][0] - current_pos[0] >= 1:
+            msg = "D"
+        elif path[0][0] - current_pos[0] <= -1:
+            msg = "A"
+        elif path[0][1] - current_pos[1] >= 1:
+            msg = "W"
+        elif path[0][1] - current_pos[1] <= -1:
+            msg = "S"
+        else:
+            msg = "0"
+    return msg
 
 def main():
     camera = cv2.VideoCapture(3)
@@ -146,6 +171,22 @@ def main():
 
     # end goal coords
     goal = (19, 27)
+    
+    port = serial.Serial(com_port, baudrate=115200)
+    if (port.is_open == False):
+        port.open()
+        print("[green]port open [/]")
+    if port.is_open:
+        print(port.is_open)
+        print("[green]port open[/]\n")
+        with Progress() as progress:
+            task1 = progress.add_task("[red]Waiting for MCU...[/]", total = 10)
+            while not progress.finished:
+                time.sleep(1)
+                progress.update(task1, advance=1)
+        print("[green]Waiting complete![/]")
+        #time.sleep(10)   #wait needed from port to open properly and MCU to be ready
+
 
     while(1):
         _,img = camera.read()
@@ -224,10 +265,44 @@ def main():
         print(route)
 
 
+        path = route
+        angle = current_angle
+        current_pos = scaled_robotcoords
+        
+
+        if port.is_open:
+            cmd = generate_command(path, angle, current_pos)
+            port.write(bytes(cmd, 'UTF-8'))
+            port.write(b'\n') #add a carriage return character
+            print(cmd)
+            # length_of_path = len(path)
+            # for i in range(length_of_path):
+            #     cmd = generate_command(path, angle)
+            #     print(cmd)
+            #     port.write(bytes(cmd, 'UTF-8'))
+            #     port.write(b'\n') #add a carriage return character
+            #     if cmd[0] in ["A", "S", "D", "W"]:
+            #         path.pop(0)
+            #         angle += 5
+            #     elif cmd[0] == '9':
+            #         angle += 15
+            #     elif cmd[0] == '7':
+            #         angle -= 15
+            #     # time.sleep(1)
+            
+        else:
+            print("[red]oop[/][yellow], couldnt open port[/]\n")    
+
+        
+        
+
         if cv2.waitKey(10) & 0xFF == ord('q'):
             camera.release()
             cv2.destroyAllWindows()
             break
+    port.close()
+    print("port closed")
+    return 0
 
 if __name__ == "__main__":
     main()

@@ -62,9 +62,9 @@
 BluetoothSerial SerialBT;
 
 char Control_sig  = STOP;
-volatile int duty = 125; // --- starting duty
-volatile int interruptCounter;
-volatile int PART1_LOADED_FLAG = 0;
+volatile int duty = 125; // --- starting duty, 115 wasnt 
+volatile int interruptCounter   = 0;
+volatile int PART1_LOADED_FLAG  = 0;
 
 int stopduty  = 0;
 int freq      = 5000;

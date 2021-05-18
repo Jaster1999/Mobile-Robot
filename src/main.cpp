@@ -57,8 +57,6 @@
 #define RotCCW '7'
 #define RotCW '9'
 
-
-
 // --- objects ---//
 BluetoothSerial SerialBT;
 
@@ -68,6 +66,7 @@ volatile int interruptCounter;
 int stopduty = 0;
 int freq = 5000;
 
+<<<<<<< Updated upstream
 //----------------- Interrupt 
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -79,6 +78,12 @@ void IRAM_ATTR onTimer() {
 }
 
 
+=======
+volatile int PART1_LOADED_FLAG = 0;
+volatile int PART2_LOADED_FLAG = 0;
+
+//----------- function defs
+>>>>>>> Stashed changes
 void FrontLeft_CW() {
   digitalWrite(FrontLeft_Dir,LOW);
   ledcSetup(0,freq,8);
@@ -240,8 +245,12 @@ void printMAC(){
 void setup()
 {
   //- -------- Setup Serial comms -------//
+<<<<<<< Updated upstream
  
   Serial.begin(115200);
+=======
+  Serial.begin(9600);
+>>>>>>> Stashed changes
   SerialBT.begin("TechnoWeed ESP32test"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
   Serial.println("Device name: TechnoWeed ESP32test");
@@ -251,30 +260,47 @@ void setup()
 
   // pinMode(LED, OUTPUT); // LED identifier
 
-  pinMode(FrontLeft_En, OUTPUT); // MOtor 1 PWM enable 
-  pinMode(FrontLeft_Dir, OUTPUT); // MOtor 1 direction control
+  pinMode(FrontLeft_En, OUTPUT); // Motor 1 PWM enable 
+  pinMode(FrontLeft_Dir, OUTPUT); // Motor 1 direction control
   pinMode(Motor_EN,OUTPUT);  // Mode select
 
-  pinMode(FrontRight_En, OUTPUT); // MOtor 1 PWM enable 
+  pinMode(FrontRight_En, OUTPUT); // Motor 2 PWM enable 
   pinMode(FrontRight_Dir, OUTPUT);
 
-  pinMode(RearLeft_En, OUTPUT); // MOtor 1 PWM enable 
+  pinMode(RearLeft_En, OUTPUT); // Motor 2 PWM enable 
   pinMode(RearLeft_Dir, OUTPUT);
   
-  pinMode(RearRight_En, OUTPUT); // MOtor 1 PWM enable 
+  pinMode(RearRight_En, OUTPUT); // Motor 2 PWM enable 
   pinMode(RearRight_Dir, OUTPUT);
+
+  pinMode(Load_SW1, INPUT);
+  pinMode(Load_SW2, INPUT);
 
   digitalWrite(Motor_EN, HIGH);
 
+<<<<<<< Updated upstream
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 1000000, true); //(timer, microseconds)
   timerAlarmEnable(timer);
+=======
+>>>>>>> Stashed changes
 
 }
  
 void loop()
 {
+  //------------------ Part detection 
+  if (Load_SW1 == HIGH){
+    // ---- part 1 loaded 
+    // ---- spin around and do a dance
+  }
+
+    if (Load_SW2 == HIGH){
+    // ---- part 2 loaded 
+    // ---- spin around and do a dance
+  }
+
   if (Serial.available()) {
     SerialBT.write(Serial.read());
   }
@@ -335,8 +361,8 @@ void loop()
 
       case dutyDown:
         duty = duty - 10;
-        if (duty <= 50){ // motors dont seem to handle low duty 
-          duty = 50;
+        if (duty <= 60){ // motors dont seem to handle low duty 
+          duty = 60;
         }
         Motor_Controller();
         Serial.print(" Duty down: ");

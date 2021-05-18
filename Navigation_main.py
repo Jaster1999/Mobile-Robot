@@ -78,7 +78,7 @@ def getangle(pos1, pos2):
         angle_rad = -math.atan2(-xdif, ydif)
     elif(xdif == 0 and ydif > 0):
         angle_rad = 0
-    elif(xdf == 0 and ydif<0):
+    elif(xdif == 0 and ydif<0):
         angle_rad = math.pi
     elif(ydif == 0 and xdif > 0):
         angle_rad = math.pi/2

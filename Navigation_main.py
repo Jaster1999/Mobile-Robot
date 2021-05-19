@@ -140,23 +140,26 @@ def astar(array, start, goal):
 
 def generate_command(path, angle, current_pos):
     msg = ' '
-    if(len(path) == 1):
-        return msg
-    else:
-        if angle>10 and angle <= 180:
-            msg = "7"
-        elif angle<350 and angle > 180:
-            msg = "9"
-        elif path[0][0] - current_pos[0] >= 1:
-            msg = "D"
-        elif path[0][0] - current_pos[0] <= -1:
-            msg = "A"
-        elif path[0][1] - current_pos[1] >= 1:
-            msg = "W"
-        elif path[0][1] - current_pos[1] <= -1:
-            msg = "S"
+    try:
+        if(len(path) == 1):
+            return msg
         else:
-            msg = "0"
+            if angle>10 and angle <= 180:
+                msg = "9"
+            elif angle<350 and angle > 180:
+                msg = "7"
+            elif path[0][0] - current_pos[0] >= 1:
+                msg = "D"
+            elif path[0][0] - current_pos[0] <= -1:
+                msg = "A"
+            elif path[0][1] - current_pos[1] >= 1:
+                msg = "S"
+            elif path[0][1] - current_pos[1] <= -1:
+                msg = "W"
+            else:
+                msg = "0"
+    except:
+        msg = ' '
     return msg
 
 def main():
@@ -170,7 +173,8 @@ def main():
         print("Robot filter", calibrate(camera))
 
     # end goal coords
-    goal = (19, 27)
+    goal = (18, 27)
+    #goal = ()
     
     port = serial.Serial(com_port, baudrate=115200)
     if (port.is_open == False):
@@ -193,21 +197,21 @@ def main():
         img = cv2.flip(img,1)
 
         # create dot filter, dot is the blue dot on the robot
-        lowerRegionBackground = np.array([99, 108, 120],np.uint8)
-        upperRegionBackground = np.array([111, 255, 187],np.uint8)
+        lowerRegionBackground = np.array([99, 109, 100],np.uint8)
+        upperRegionBackground = np.array([109, 255, 184],np.uint8)
         dot_mask, dot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
         dot_res=[]
         inv_dot_mask = cv2.bitwise_not(dot_mask) 
         cv2.imshow("Dilation adj dot_mask", inv_dot_mask)
 
         # create robot filter
-        lowerRegionBackground = np.array([0, 172, 131],np.uint8)
+        lowerRegionBackground = np.array([0, 142, 131],np.uint8)
         upperRegionBackground = np.array([32, 255, 225],np.uint8)
         robot_mask, robot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
         robot_res=[]
         inv_rob_mask = cv2.bitwise_not(robot_mask) 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        dot_plus_robot_mask = cv2.dilate(cv2.add(inv_rob_mask, inv_dot_mask), kernel, iterations=1)
+        dot_plus_robot_mask = cv2.dilate(cv2.add(inv_rob_mask, inv_dot_mask), kernel, iterations=5)
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
         eroded_rob_mask = cv2.erode(inv_rob_mask, (7, 7), iterations=3)
         dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel2, iterations=1)
@@ -220,6 +224,7 @@ def main():
         combined_mask = cv2.subtract(mask, dot_plus_robot_mask) 
         #inv_mask = cv2.bitwise_not(combined_mask)
         eroded_mask = cv2.erode(combined_mask, (7, 7), iterations=3)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
         dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
         cv2.imshow("Dilation adj mask", dilated_mask)
 
@@ -237,23 +242,22 @@ def main():
         except:
             print("Robot lost")
             current_angle = 0
-        cv2.imshow("dots", img)
         #print(current_angle)
 
         # produce a grid for the astar pathfinder
         resized_mask = cv2.resize(dilated_mask, None, fx=0.05, fy=0.05, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
         resized_mask[resized_mask!=0]=1 # turning grid into 1's and 0's
         #print(resized_mask)
-        for line in resized_mask:
+        '''for line in resized_mask:
             line = str(line)
             new_line = ''
             for char in line.split():
                 new_line = new_line+char+", "
-            print(new_line)
-        print(resized_mask.shape)
+            print(new_line)'''
+        # print(resized_mask.shape)
 
         # transforming robot coords into grid coord system.
-        scaled_robotcoords = (int(robot_centre[0]/20), int(robot_centre[1]/20))
+        scaled_robotcoords = (int(robot_centre[1]/20), int(robot_centre[0]/20))
         #print(scaled_robotcoords)
         # finding the route, remember to set a real end goal
         route = astar(resized_mask, scaled_robotcoords, goal)
@@ -262,19 +266,27 @@ def main():
         except:
             route = scaled_robotcoords
             print("No route found")
-        print(route)
-
+        # print(route)
+        try:
+            for coord in route:
+                #print(coord)
+                cv2.circle(img, (coord[1]*20, coord[0]*20), 3, (255, 0, 0), -1)
+        except:
+            pass
+        cv2.circle(img, (goal[1]*20, goal[0]*20), 3, (255, 0, 0), -1)
+        cv2.imshow("dots", img)
 
         path = route
         angle = current_angle
         current_pos = scaled_robotcoords
-        
+        #print(current_pos)
 
         if port.is_open:
             cmd = generate_command(path, angle, current_pos)
             port.write(bytes(cmd, 'UTF-8'))
             port.write(b'\n') #add a carriage return character
             print(cmd)
+            time.sleep(1)
             # length_of_path = len(path)
             # for i in range(length_of_path):
             #     cmd = generate_command(path, angle)

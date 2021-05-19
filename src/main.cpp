@@ -172,7 +172,7 @@ void Motor_Controller() {
 
 //----------- Driving ------------//
 void Left() {
-  duty = 120;
+  duty = 140;
   Motor_Controller();
   FrontLeft_CW();
   FrontRight_CW();
@@ -181,7 +181,7 @@ void Left() {
 }
 
 void Right() {
-  duty = 120;
+  duty = 140;
   Motor_Controller();
   FrontLeft_CCW();
   FrontRight_CCW();
@@ -190,7 +190,7 @@ void Right() {
 }
 
 void Forward() {
-  duty = 120;
+  duty = 140;
   Motor_Controller();
   FrontLeft_CCW();
   FrontRight_CW();
@@ -199,7 +199,7 @@ void Forward() {
 }
 
 void Reverse() {
-  duty = 120;
+  duty = 140;
   Motor_Controller();
   FrontLeft_CW();
   FrontRight_CCW();
@@ -214,7 +214,7 @@ void Stop() {
   }
 
 void RotateCW(){
-  duty = 80;
+  duty = 110;
   FrontLeft_CW();
   FrontRight_CW();
   RearLeft_CW();
@@ -222,7 +222,7 @@ void RotateCW(){
 }
 
 void RotateCCW(){
-  duty =  80;
+  duty =  110;
   FrontLeft_CCW();
   FrontRight_CCW();
   RearLeft_CCW();
@@ -280,7 +280,7 @@ void setup()
   // timer clock is default set to 80 MHz
   timer = timerBegin(0, 80, true);  // 80 is the prescaler so timer is running at 1MHz 
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 1200000, true); // (timer, microseconds)
+  timerAlarmWrite(timer, 250000, true); // (timer, microseconds)80MHz/80/1000000 == 1s
   timerAlarmEnable(timer);
 }
  
@@ -312,6 +312,7 @@ void loop()
   // ------------- Incoming Bluetooth Handling --------------------- //
   if (SerialBT.available()) {
     // timerAlarmWrite(timer, 1000000); //set to half a second, this isnt resetting the timer
+    timerAlarmDisable(timer);
     timerRestart(timer);      // ------------- when a bluetooth command comes in timer 1 is reset
     timerAlarmEnable(timer);  // ------------- Hate to be obvious, enable timer bit...
     char Control_sig = SerialBT.read();

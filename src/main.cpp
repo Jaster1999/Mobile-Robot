@@ -5,6 +5,7 @@
 
 // To do:  - Confirm pin selection with Stan
 //         - Add interrupt capability
+//         - Add Speed control to servos
 
 #include <Arduino.h>
 #include <Servo.h> 
@@ -24,7 +25,7 @@
 
 #define BUF_LEN     20
 
-#define STOP        '0'
+#define STOP        's'
 #define HOME        'h' 
 
 //------------------ Object Definitions --------------------- // 
@@ -38,6 +39,8 @@ AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 //------------------ Function prototypes --------------------- // 
 void handleSerial (void);
 void homeStepper(void);
+void moveStepper(int steps);
+int SerialStopChecker(void);
 
 // ----------------- Globals -----------------------------=---//
 long int homeSpeed  = 550; 
@@ -48,20 +51,23 @@ long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
 String sdata = "";
 double Time = 0;
+double currentTime = 0;
 double previousTime = 0;
 
 int i = 0;
 int k = 0;
 
 bool SafeToRun = false;
-
+int LEDstate = 0;
 void setup() { 
   // --------------- Pin setup ------------------ //
   pinMode(LED, OUTPUT);
   pinMode(joint2_pin, OUTPUT);
   pinMode(joint3_pin, OUTPUT);
   pinMode(Gripper_pin, OUTPUT);
-
+  pinMode(Z_en, OUTPUT);
+  pinMode(Z_homeSw, INPUT);
+  
   Serial.begin(115200);
 
   joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 9
@@ -75,7 +81,7 @@ void setup() {
   joint3.write(0);
   Gripper.write(0);
   Time = millis();
-  unsigned long currentTime = millis();
+  currentTime = millis();
   while(Homed == false){
     currentTime = millis();
     if ((currentTime - Time) >= 1000){
@@ -88,19 +94,25 @@ void setup() {
  
  
 void loop() { 
-  // unsigned long currentTime = millis();
-  digitalWrite(LED, LOW);
   handleSerial();
+  currentTime = millis();
+  if ((currentTime - Time) >= 1000){
+    LEDstate ^= 1;
+    digitalWrite(LED, LEDstate); // -- flash led just cos
+    Time = currentTime;
+  }
   }
 
 void handleSerial(){
   static char sdata[BUF_LEN], *pSdata=sdata;
   byte ch;
   int Angle;
+  int steps;
+
   if (Serial.available()){
     digitalWrite(LED, HIGH);
     // delay(100);
-
+    SafeToRun = true;
     ch = Serial.read();
     if (Homed == false){
       if (ch == HOME){
@@ -145,6 +157,15 @@ void handleSerial(){
             }
           break;
 
+        case 'Z':
+          // servo 3
+          if (strlen(sdata)>1){
+            Serial.println("Z axis bruddah");
+            steps = atoi(&sdata[1]);
+            moveStepper(steps);
+            }
+          break;
+
         case HOME:
           // Home Z axis
           homeStepper();
@@ -164,6 +185,7 @@ void handleSerial(){
       pSdata = sdata;
     }
   }
+  SafeToRun = false;
 }
 
 void homeStepper(void){
@@ -193,4 +215,33 @@ void homeStepper(void){
   stepperZ.setCurrentPosition(0); 
   Serial.println("Stepper Z is Homed \n");
 
+}
+
+void moveStepper(int steps){
+  stepperZ.moveTo(steps);
+  delay(5);
+  while((stepperZ.distanceToGo() != 0) && (SafeToRun == true)){
+    SerialStopChecker(); 
+    stepperZ.run(); 
+    delay(5);
+  }
+  Serial.print("Z stopped at: "); Serial.println(stepperZ.currentPosition());
+
+
+}
+int SerialStopChecker(void){
+  if (Serial.available() > 0){
+      char c = Serial.read();
+      if (c == STOP){
+        Serial.println("Stop");
+        stepperZ.stop();
+        SafeToRun = false;
+        delay(5);
+        return 0;
+      } 
+      else{
+        return 1;
+      }
+  } 
+  return 1;
 }

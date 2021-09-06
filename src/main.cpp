@@ -1,12 +1,10 @@
-// Team Robot Manipulator project
+// Team Robot Manipulator Project
 // SCARA arm design
 // 1 x Nema 23 drives the Z axis
 // 3 x Servos to drive Joint 2, 3 and gripper
 
 // To do:  - Confirm pin selection with Stan
 //         - Add interrupt capability
-
-
 
 #include <Arduino.h>
 #include <Servo.h> 
@@ -19,10 +17,10 @@
 #define Pressure A0
 #define reference A1
 
-#define Z_dir 10    // these need to be confirmed with Stan
-#define Z_stp 11    //
-#define Z_en 12     //
-#define Z_homeSw 13 //
+#define Z_dir 10    // -- these need to be confirmed with Stan
+#define Z_stp 11    // -- 
+#define Z_en 12     // -- 
+#define Z_homeSw 13 // -- 
 
 #define BUF_LEN 20
 
@@ -34,8 +32,7 @@
 Servo joint2;  
 Servo joint3;
 Servo Gripper;
-
-
+// creat stepper object to control Z axis
 AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 
 //------------------ Function prototypes --------------------- // 
@@ -48,9 +45,9 @@ long int maxSpeed   = 1000;
 long int homeAccel  = 300; 
 long int MaxAccel   = 500; 
 long int init_homing = -1;
-
+bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
 String sdata = "";
-double pressureTime = 0;
+double Time = 0;
 double previousTime = 0;
 
 int i = 0;
@@ -77,22 +74,26 @@ void setup() {
   joint2.write(0);  
   joint3.write(0);
   Gripper.write(0);
-  
-
-  pressureTime = millis();
-  // Serial.print("hello\n");
+  Time = millis();
+  unsigned long currentTime = millis();
+  while(Homed == false){
+    if ((currentTime - Time) >= 1000){
+      Serial.println("home me ya bastards");
+      Time = currentTime;
+    }
+    if (Serial.available()
 } 
  
  
 void loop() { 
   unsigned long currentTime = millis();
   digitalWrite(LED, LOW);
+  
+
+  }
   handleSerial();
   // 
-  
-  if ((currentTime - pressureTime) >= 100){
-    pressureTime = currentTime;
-  }
+  // 
   }
 
 void handleSerial(){
@@ -102,7 +103,11 @@ void handleSerial(){
   if (Serial.available()){
     digitalWrite(LED, HIGH);
     // delay(100);
+
     ch = Serial.read();
+    if (Homed == false){
+      
+    }
     if ((pSdata - sdata) >= BUF_LEN-1) {
       pSdata--; 
       Serial.print("BUFFER OVERRUN\n"); 
@@ -164,7 +169,7 @@ void homeStepper(void){
   stepperZ.setAcceleration(homeAccel);
   stepperZ.moveTo(-30000);
 
-  Serial.print("Stepper X is Homing . . . . . . . . . . . ");
+  Serial.print("Stepper Z is Homing . . . . . . . . . . . ");
 
   while ((digitalRead(Z_homeSw) == LOW) && (SafeToRun == true)) {  // Make the Stepper move CCW until the switch is activated
     if (Serial.available() > 0){

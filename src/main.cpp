@@ -1,393 +1,188 @@
-// ---- Bluetooth control of ESP32-DEVKITC V4
-// ---- written by Knife for Techno weed teams mobile robot 20/04/21
-//To do:    
-//          Add bluetooth initialisation ---------- Done 
-        //  make motors controllable with bluetooth Done
-        //  Add direction control ----------------- Done
-        //  Add Ultrasonic sensor interfacing ----- 
-        //  Add Part loaded switch ---------------- Done
-        
-#include "BluetoothSerial.h"
-#include "esp_bt_device.h"
+// Team Robot Manipulator project
+// SCARA arm design
+// 1 x Nema 23 drives the Z axis
+// 3 x Servos to drive Joint 2, 3 and gripper
 
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
+// To do:  - Confirm pin selection with Stan
+//         - Add interrupt capability
 
-//-------------- definitions -------------//
 
-#define FrontLeft_En  13
-#define FrontLeft_Dir 12 
-#define Motor_EN      14
 
-#define FrontRight_En  2
-#define FrontRight_Dir 0
+#include <Arduino.h>
+#include <Servo.h> 
+#include <AccelStepper.h>
 
-#define RearLeft_En   26
-#define RearLeft_Dir  25
+#define LED 13 
+#define joint2_pin 2
+#define joint3_pin 3
+#define Gripper_pin 4
+#define Pressure A0
+#define reference A1
 
-#define RearRight_En  22
-#define RearRight_Dir 23
+#define Z_dir 10    // these need to be confirmed with Stan
+#define Z_stp 11    //
+#define Z_en 12     //
+#define Z_homeSw 13 //
 
-#define Trig_US       27
-#define Left_US       39
-#define Back_US       36
-#define Front_US      15
-//#define Right_US 21 //Robbed this to add part detection switch pin
+#define BUF_LEN 20
 
-#define Load_SW1      21 //3
-#define Load_SW2      1
-
-#define Encoder_1_A   18
-#define Encoder_1_B   19
-#define Encoder_2_A   26
-#define Encoder_2_B   5
-#define Encoder_3_A   32
-#define Encoder_3_B   33
-#define Encoder_4_A   35
-#define Encoder_4_B   34
-
-// -------- Define incoming Bluetooth commands -------//
 #define STOP      '0'
-#define FWD       'W' 
-#define RVS       'S' 
-#define LFT       'A'
-#define RGHT      'D'
-#define dutyUp    '8'
-#define dutyDown  '2'
-#define RotCCW    '7'
-#define RotCW     '9'
+#define HOME      'h' 
 
-// --- objects ---//
-BluetoothSerial SerialBT;
-
-char Control_sig  = STOP;
-volatile int duty = 120; // --- starting duty, 115 wasnt 
-volatile int interruptCounter   = 0;
-volatile int PART1_LOADED_FLAG  = 0;
-
-int stopduty  = 0;
-int freq      = 5000;
-
-//----------------- Interrupt -------------------//
-hw_timer_t *timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-
-// ------ Timer Overflow ISR
-void IRAM_ATTR onTimer() {
-  portENTER_CRITICAL_ISR(&timerMux); 
-  interruptCounter++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-
-//---------------- Motor Functions -------------//
-void FrontLeft_CW() {
-  digitalWrite(FrontLeft_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontLeft_En, 0);
-  ledcWrite(0,duty);
-} 
-
-void FrontLeft_CCW() {
-  digitalWrite(FrontLeft_Dir,HIGH);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontLeft_En, 0);
-  ledcWrite(0,duty);
-}
-
-void FrontLeft_stop() {
-  digitalWrite(FrontLeft_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontLeft_En,0);
-  ledcWrite(0,stopduty);
-}
-
-void FrontRight_CW() {
-  digitalWrite(FrontRight_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontRight_En,0);
-  ledcWrite(0,duty);
-} 
-
-void FrontRight_CCW() {
-  digitalWrite(FrontRight_Dir,HIGH);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontRight_En,0);
-  ledcWrite(0,duty);
-}
-
-void FrontRight_stop() {
-  digitalWrite(FrontRight_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(FrontRight_En,0);
-  ledcWrite(0,stopduty);
-}
-
-void RearLeft_CW() {
-  digitalWrite(RearLeft_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(RearLeft_En,0);
-  ledcWrite(0,duty);
-} 
-
-void RearLeft_CCW() {
-  digitalWrite(RearLeft_Dir,HIGH);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(RearLeft_En,0);
-  ledcWrite(0,duty);
-}
-
-void RearLeft_stop() {
-  digitalWrite(RearLeft_Dir,LOW);
-  // ledcSetup(0,250,8);
-  //ledcAttachPin(RearLeft_En,0);
-  ledcWrite(0,stopduty);
-}
-
-void RearRight_CW() {
-  digitalWrite(RearRight_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(RearRight_En,0);
-  ledcWrite(0,duty);
-} 
-
-void RearRight_CCW() {
-  digitalWrite(RearRight_Dir,HIGH);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(RearRight_En,0);
-  ledcWrite(0,duty);
-}
-
-void RearRight_stop() {
-  digitalWrite(RearRight_Dir,LOW);
-  ledcSetup(0,freq,8);
-  ledcAttachPin(RearRight_En,0);
-  ledcWrite(0,stopduty);
-}
-
-void Motor_Controller() {
-  ledcSetup(0,freq,8);
-  ledcWrite(0,duty);
-}
-
-//----------- Driving ------------//
-void Left() {
-  duty = 140;
-  Motor_Controller();
-  FrontLeft_CW();
-  FrontRight_CW();
-  RearLeft_CCW();
-  RearRight_CCW();
-}
-
-void Right() {
-  duty = 140;
-  Motor_Controller();
-  FrontLeft_CCW();
-  FrontRight_CCW();
-  RearLeft_CW();
-  RearRight_CW();  
-}
-
-void Forward() {
-  duty = 140;
-  Motor_Controller();
-  FrontLeft_CCW();
-  FrontRight_CW();
-  RearLeft_CCW();
-  RearRight_CW();
-}
-
-void Reverse() {
-  duty = 140;
-  Motor_Controller();
-  FrontLeft_CW();
-  FrontRight_CCW();
-  RearLeft_CW();
-  RearRight_CCW();
-}
-void Stop() {
-  FrontLeft_stop();
-  FrontRight_stop();
-  RearLeft_stop();
-  RearRight_stop();
-  }
-
-void RotateCW(){
-  duty = 110;
-  FrontLeft_CW();
-  FrontRight_CW();
-  RearLeft_CW();
-  RearRight_CW();
-}
-
-void RotateCCW(){
-  duty =  110;
-  FrontLeft_CCW();
-  FrontRight_CCW();
-  RearLeft_CCW();
-  RearRight_CCW();
-}
+//------------------ Object Definitions --------------------- // 
+// create servo object to control a servo joints
+Servo joint2;  
+Servo joint3;
+Servo Gripper;
 
 
-void printMAC(){
-  const uint8_t* point = esp_bt_dev_get_address();
-    for (int i = 0; i < 6; i++) {
-      char str[3];
-  
-      sprintf(str, "%02X", (int)point[i]);
-      Serial.print(str);
-  
-      if (i < 5){
-        Serial.print(":");
-      }
- 
-  }
-}
+AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 
-void setup()
-{
-  //- -------- Setup Serial comms -------//
- 
+//------------------ Function prototypes --------------------- // 
+void handleSerial (void);
+void homeStepper(void);
+
+// ----------------- Globals -----------------------------=---//
+long int homeSpeed  = 550; 
+long int maxSpeed   = 1000; 
+long int homeAccel  = 300; 
+long int MaxAccel   = 500; 
+long int init_homing = -1;
+
+String sdata = "";
+double pressureTime = 0;
+double previousTime = 0;
+
+int i = 0;
+int k = 0;
+
+bool SafeToRun = false;
+
+void setup() { 
+  // --------------- Pin setup ------------------ //
+  pinMode(LED, OUTPUT);
+  pinMode(joint2_pin, OUTPUT);
+  pinMode(joint3_pin, OUTPUT);
+  pinMode(Gripper_pin, OUTPUT);
+
   Serial.begin(115200);
-  SerialBT.begin("TechnoWeed ESP32test"); //Bluetooth device name
-  Serial.println("The device started, now you can pair it with bluetooth!");
-  Serial.println("Device name: TechnoWeed ESP32test");
-  Serial.print("MAC: ");
-  printMAC();
-  Serial.println();
 
-  // ------------------- Set Pin Conditions ---------------------- //
-  pinMode(FrontLeft_En, OUTPUT); // Motor 1 PWM enable 
-  pinMode(FrontLeft_Dir, OUTPUT); // Motor 1 direction control
-  pinMode(Motor_EN,OUTPUT);  // Mode select
+  joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 9
+  joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 6
+  Gripper.attach(Gripper_pin, 790, 2150);  // attaches the servo on pin 5
 
-  pinMode(FrontRight_En, OUTPUT); // Motor 2 PWM enable 
-  pinMode(FrontRight_Dir, OUTPUT);
 
-  pinMode(RearLeft_En, OUTPUT); // Motor 2 PWM enable 
-  pinMode(RearLeft_Dir, OUTPUT);
+
+  // ----------------- set servos to go to initial angle
+  joint2.write(0);  
+  joint3.write(0);
+  Gripper.write(0);
   
-  pinMode(RearRight_En, OUTPUT); // Motor 2 PWM enable 
-  pinMode(RearRight_Dir, OUTPUT);
 
-  pinMode(Load_SW1, INPUT);
-  pinMode(Load_SW2, INPUT);
-
-  digitalWrite(Motor_EN, HIGH);
-
-  // ------------------------ Timer Init -----------------------------//
-  // timer clock is default set to 80 MHz
-  timer = timerBegin(0, 80, true);  // 80 is the prescaler so timer is running at 1MHz 
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 250000, true); // (timer, microseconds)80MHz/80/1000000 == 1s
-  timerAlarmEnable(timer);
-}
+  pressureTime = millis();
+  // Serial.print("hello\n");
+} 
  
-void loop()
-{
-  // ------------------ Part detection ----------------------- //
-  if (PART1_LOADED_FLAG == 0){
-    Serial.println("part unloaded");
-    while (digitalRead(Load_SW1) == LOW){
-      // wait for part to be loaded
+ 
+void loop() { 
+  unsigned long currentTime = millis();
+  digitalWrite(LED, LOW);
+  handleSerial();
+  // 
+  
+  if ((currentTime - pressureTime) >= 100){
+    pressureTime = currentTime;
+  }
+  }
+
+void handleSerial(){
+  static char sdata[BUF_LEN], *pSdata=sdata;
+  byte ch;
+  int Angle;
+  if (Serial.available()){
+    digitalWrite(LED, HIGH);
+    // delay(100);
+    ch = Serial.read();
+    if ((pSdata - sdata) >= BUF_LEN-1) {
+      pSdata--; 
+      Serial.print("BUFFER OVERRUN\n"); 
     }
-      // Serial.print("Loaded sw1 state = ");
-      // Serial.println(digitalRead(Load_SW1));
-    PART1_LOADED_FLAG = 1;
-    Serial.println("Part loaded");
-    delay(200);
-  }
+    *pSdata++ = (char)ch;
+    if (ch=='\n'){
+      pSdata--;
+      *pSdata = '\0';
+    
+      switch (sdata[0]) {
+        case '1':
+          // servo 1
+          if (strlen(sdata)>1){
+            Angle = atoi(&sdata[1]);
+            joint2.write(Angle);
+            }
+          break;
 
-  if ((PART1_LOADED_FLAG == 1) && (digitalRead(Load_SW1)== LOW)){
-    Serial.println("Part delivered load next part");
-    //PART1_LOADED_FLAG = 0;
-    delay(200);
-  }
-  // -------------- Generic bluetooth serial code ------------------ //
-  if (Serial.available()) {
-    SerialBT.write(Serial.read());
-  }
+        case '2':
+          // servo 2
+          if (strlen(sdata)>1){
+            Angle = atoi(&sdata[1]);
+            joint3.write(Angle);
+            }
+          break;
 
-  // ------------- Incoming Bluetooth Handling --------------------- //
-  if (SerialBT.available()) {
-    // timerAlarmWrite(timer, 1000000); //set to half a second, this isnt resetting the timer
-    timerAlarmDisable(timer);
-    timerRestart(timer);      // ------------- when a bluetooth command comes in timer 1 is reset
-    timerAlarmEnable(timer);  // ------------- Hate to be obvious, enable timer bit...
-    char Control_sig = SerialBT.read();
-    Serial.write(Control_sig);
-    switch (Control_sig) {
-      case STOP:
+        case '3':
+          // servo 3
+          if (strlen(sdata)>1){
+            Angle = atoi(&sdata[1]);
+            Gripper.write(Angle);
+            }
+          break;
+
+        case HOME:
+          // Home Z axis
+          if (strlen(sdata)>1){
+            
+            }
+          break;
+
+        case STOP:
+          // Home Z axis
+          stepperZ.stop();
+          break;
+        
+        
+        default: Serial.println(sdata);
+      }
+
+      pSdata = sdata;
+    }
+  }
+}
+
+void homeStepper(void){
+  // --------------------- setup up homing speeds ---------- //
+  stepperZ.setMaxSpeed(homeSpeed);
+  stepperZ.setAcceleration(homeAccel);
+  stepperZ.moveTo(-30000);
+
+  Serial.print("Stepper X is Homing . . . . . . . . . . . ");
+
+  while ((digitalRead(Z_homeSw) == LOW) && (SafeToRun == true)) {  // Make the Stepper move CCW until the switch is activated
+    if (Serial.available() > 0){
+      char c = Serial.read();
+      if (c == STOP){
         Serial.println("Stop");
-        Stop();
-        break;
-        
-      case FWD:
-        Forward();
-        //Serial.println("FWD");
-        break;
-        
-      case RVS:
-        Reverse();
-        //Serial.println("RVS");
-        break;
-        
-      case LFT:
-        Left();
-        //Serial.println("LFT");
-        break;
-
-      case RGHT:
-
-        Right();
-        //Serial.println("RIGHT");
-        break;
-
-      case RotCW:
-        RotateCW();
-        Motor_Controller();
-        //Serial.println("Rotate CW");
-        break;
-
-      case RotCCW:
-        RotateCCW();
-        Motor_Controller();
-        // Serial.println("Rotate CCW");
-        break;
-
-      case dutyUp:
-        duty = duty + 10;
-        if (duty >= 256){ // cap the duty value
-          duty = 256;
-        }
-        Motor_Controller();
-        // Serial.print(" Duty up: ");
-        Serial.println(duty);
-        break;
-
-      case dutyDown:
-        duty = duty - 10;
-        if (duty <= 60){ // motors dont seem to handle low duty 
-          duty = 60;
-        }
-        Motor_Controller();
-        // Serial.print(" Duty down: ");
-        Serial.println(duty);
-        break;
-        
-      default:
-        break;
-    }
+        stepperZ.stop();
+        SafeToRun = false;
+        return;
+      }  
+    }    
+    stepperZ.moveTo(init_homing);  // Set the position to move to
+    init_homing--;  // Decrease by 1 for next move if needed
+    stepperZ.run();  // Start moving the stepper
+    delay(5);
   }
-  // --------------------- interrupt handling code ----------------------- //
-  if (interruptCounter > 0) {
-    portENTER_CRITICAL(&timerMux);
-    interruptCounter--;
-    portEXIT_CRITICAL(&timerMux);
-    // Serial.println("interrupt");
-    // Serial.println("Stop");
-    timerAlarmDisable(timer);
-    Stop();
-  }
+  init_homing = -1;
+  stepperZ.setCurrentPosition(0); 
+  Serial.println("Stepper Z is Homed \n");
+
 }

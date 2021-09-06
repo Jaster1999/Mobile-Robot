@@ -81,19 +81,15 @@ void setup() {
       Serial.println("home me ya bastards");
       Time = currentTime;
     }
-    if (Serial.available()
+    handleSerial();
+  }
 } 
  
  
 void loop() { 
-  unsigned long currentTime = millis();
+  // unsigned long currentTime = millis();
   digitalWrite(LED, LOW);
-  
-
-  }
   handleSerial();
-  // 
-  // 
   }
 
 void handleSerial(){
@@ -106,7 +102,10 @@ void handleSerial(){
 
     ch = Serial.read();
     if (Homed == false){
-      
+      if (ch == HOME){
+        homeStepper();
+        Homed = true;
+      }
     }
     if ((pSdata - sdata) >= BUF_LEN-1) {
       pSdata--; 

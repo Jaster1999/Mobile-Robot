@@ -10,22 +10,22 @@
 #include <Servo.h> 
 #include <AccelStepper.h>
 
-#define LED 13 
-#define joint2_pin 2
-#define joint3_pin 3
+#define LED         13 
+#define joint2_pin  2
+#define joint3_pin  3
 #define Gripper_pin 4
-#define Pressure A0
-#define reference A1
+#define Pressure    A0
+#define reference   A1
 
-#define Z_dir 10    // -- these need to be confirmed with Stan
-#define Z_stp 11    // -- 
-#define Z_en 12     // -- 
-#define Z_homeSw 13 // -- 
+#define Z_dir       10    // -- these need to be confirmed with Stan
+#define Z_stp       11    // -- 
+#define Z_en        12    // -- 
+#define Z_homeSw    9     // -- 
 
-#define BUF_LEN 20
+#define BUF_LEN     20
 
-#define STOP      '0'
-#define HOME      'h' 
+#define STOP        '0'
+#define HOME        'h' 
 
 //------------------ Object Definitions --------------------- // 
 // create servo object to control a servo joints
@@ -77,6 +77,7 @@ void setup() {
   Time = millis();
   unsigned long currentTime = millis();
   while(Homed == false){
+    currentTime = millis();
     if ((currentTime - Time) >= 1000){
       Serial.println("home me ya bastards");
       Time = currentTime;
@@ -120,6 +121,7 @@ void handleSerial(){
         case '1':
           // servo 1
           if (strlen(sdata)>1){
+            Serial.println("Servo 1 bruddah");
             Angle = atoi(&sdata[1]);
             joint2.write(Angle);
             }
@@ -128,6 +130,7 @@ void handleSerial(){
         case '2':
           // servo 2
           if (strlen(sdata)>1){
+            Serial.println("Servo 2 bruddah");
             Angle = atoi(&sdata[1]);
             joint3.write(Angle);
             }
@@ -136,6 +139,7 @@ void handleSerial(){
         case '3':
           // servo 3
           if (strlen(sdata)>1){
+            Serial.println("Servo 3 bruddah");
             Angle = atoi(&sdata[1]);
             Gripper.write(Angle);
             }
@@ -143,14 +147,14 @@ void handleSerial(){
 
         case HOME:
           // Home Z axis
-          if (strlen(sdata)>1){
-            
-            }
+          homeStepper();
+          Serial.println("Stepper homed bruddah");
           break;
 
         case STOP:
           // Home Z axis
           stepperZ.stop();
+          Serial.println("Stepper stopped bruddah");
           break;
         
         

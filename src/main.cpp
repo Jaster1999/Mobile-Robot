@@ -118,6 +118,7 @@ void handleSerial(){
       if (ch == HOME){
         homeStepper();
         Homed = true;
+        Serial.println("... Ready ...");
       }
     }
     if ((pSdata - sdata) >= BUF_LEN-1) {
@@ -125,7 +126,7 @@ void handleSerial(){
       Serial.print("BUFFER OVERRUN\n"); 
     }
     *pSdata++ = (char)ch;
-    if (ch=='\n'){
+    if ((ch=='\n') && (Homed == true)){
       pSdata--;
       *pSdata = '\0';
     
@@ -133,35 +134,35 @@ void handleSerial(){
         case '1':
           // servo 1
           if (strlen(sdata)>1){
-            Serial.println("Servo 1 bruddah");
             Angle = atoi(&sdata[1]);
             joint2.write(Angle);
+            Serial.print("Joint 2 moved to:"); Serial.println(Angle);
             }
           break;
 
         case '2':
           // servo 2
           if (strlen(sdata)>1){
-            Serial.println("Servo 2 bruddah");
             Angle = atoi(&sdata[1]);
             joint3.write(Angle);
+            Serial.print("Joint 3 moved to:"); Serial.println(Angle);
             }
           break;
 
         case '3':
           // servo 3
-          if (strlen(sdata)>1){
-            Serial.println("Servo 3 bruddah");
+          if (strlen(sdata)>1){ 
             Angle = atoi(&sdata[1]);
             Gripper.write(Angle);
+            Serial.print("Gripper moved to:"); Serial.println(Angle);
             }
           break;
 
         case 'Z':
           // servo 3
           if (strlen(sdata)>1){
-            Serial.println("Z axis bruddah");
             steps = atoi(&sdata[1]);
+            Serial.print("Z axis moved to:"); Serial.println(steps);
             moveStepper(steps);
             }
           break;
@@ -169,13 +170,13 @@ void handleSerial(){
         case HOME:
           // Home Z axis
           homeStepper();
-          Serial.println("Stepper homed bruddah");
+          Serial.println("Stepper homed");
           break;
 
         case STOP:
           // Home Z axis
           stepperZ.stop();
-          Serial.println("Stepper stopped bruddah");
+          Serial.println("Stepper stopped");
           break;
         
         
@@ -183,6 +184,7 @@ void handleSerial(){
       }
 
       pSdata = sdata;
+      Serial.println("... Ready ...");
     }
   }
   SafeToRun = false;

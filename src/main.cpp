@@ -15,8 +15,6 @@
 #define joint2_pin  2
 #define joint3_pin  3
 #define Gripper_pin 4
-#define Pressure    A0
-#define reference   A1
 
 #define Z_dir       10    // -- these need to be confirmed with Stan
 #define Z_stp       11    // -- 

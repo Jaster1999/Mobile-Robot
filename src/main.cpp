@@ -14,12 +14,13 @@
 #define LED         13 
 #define joint2_pin  2
 #define joint3_pin  3
-#define Gripper_pin 4
+#define joint4_pin  4
+#define Gripper_pin 5
 
-#define Z_dir       10    // -- these need to be confirmed with Stan
-#define Z_stp       11    // -- 
-#define Z_en        12    // -- 
-#define Z_homeSw    9     // -- 
+#define Z_en        6    
+#define Z_homeSw    9
+#define Z_dir       A4    
+#define Z_stp       A5    
 
 #define BUF_LEN     20
 
@@ -30,6 +31,7 @@
 // create servo object to control a servo joints
 Servo joint2;  
 Servo joint3;
+Servo joint4;
 Servo Gripper;
 // creat stepper object to control Z axis
 AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
@@ -62,28 +64,30 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(joint2_pin, OUTPUT);
   pinMode(joint3_pin, OUTPUT);
+  pinMode(joint4_pin, OUTPUT);
   pinMode(Gripper_pin, OUTPUT);
   pinMode(Z_en, OUTPUT);
   pinMode(Z_homeSw, INPUT);
   
   Serial.begin(115200);
 
-  joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 9
-  joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 6
+  joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 2
+  joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 3
+  joint4.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 4
   Gripper.attach(Gripper_pin, 790, 2150);  // attaches the servo on pin 5
-
 
 
   // ----------------- set servos to go to initial angle
   joint2.write(0);  
   joint3.write(0);
+  joint4.write(0);
   Gripper.write(0);
   Time = millis();
   currentTime = millis();
   while(Homed == false){
     currentTime = millis();
     if ((currentTime - Time) >= 1000){
-      Serial.println("home me ya bastards");
+      Serial.println("home me please good sirs");
       Time = currentTime;
     }
     handleSerial();
@@ -129,8 +133,8 @@ void handleSerial(){
       *pSdata = '\0';
     
       switch (sdata[0]) {
-        case '1':
-          // servo 1
+        case '2':
+          // servo 1 on joint 2
           if (strlen(sdata)>1){
             Angle = atoi(&sdata[1]);
             joint2.write(Angle);
@@ -138,8 +142,8 @@ void handleSerial(){
             }
           break;
 
-        case '2':
-          // servo 2
+        case '3':
+          // servo 2 on joint 3
           if (strlen(sdata)>1){
             Angle = atoi(&sdata[1]);
             joint3.write(Angle);
@@ -147,8 +151,17 @@ void handleSerial(){
             }
           break;
 
-        case '3':
-          // servo 3
+          case '4':
+          // servo 3 on joint 4
+          if (strlen(sdata)>1){
+            Angle = atoi(&sdata[1]);
+            joint3.write(Angle);
+            Serial.print("Joint 4 moved to:"); Serial.println(Angle);
+            }
+          break;
+
+        case 'G':
+          // servo Gripper
           if (strlen(sdata)>1){ 
             Angle = atoi(&sdata[1]);
             Gripper.write(Angle);
@@ -157,7 +170,7 @@ void handleSerial(){
           break;
 
         case 'Z':
-          // servo 3
+          // Z stepper call
           if (strlen(sdata)>1){
             steps = atoi(&sdata[1]);
             Serial.print("Z axis moved to:"); Serial.println(steps);
@@ -195,7 +208,7 @@ void homeStepper(void){
   stepperZ.moveTo(-30000);
 
   Serial.print("Stepper Z is Homing . . . . . . . . . . . ");
-
+  // limit switch is pulled down so goes high when pressed
   while ((digitalRead(Z_homeSw) == LOW) && (SafeToRun == true)) {  // Make the Stepper move CCW until the switch is activated
     if (Serial.available() > 0){
       char c = Serial.read();

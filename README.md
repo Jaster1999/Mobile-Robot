@@ -7,6 +7,4 @@ Things to do:
 - produce astar algorithm
 - test and test
 
-- Make the cash money
-- become iron man
-- big jet
+

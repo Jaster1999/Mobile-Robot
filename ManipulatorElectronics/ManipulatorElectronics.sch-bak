@@ -91,7 +91,7 @@ Text GLabel 2250 2350 2    50   Input ~ 0
 StepperPWM
 Text GLabel 2250 2250 2    50   Input ~ 0
 StepperDIR
-Text GLabel 2250 1850 2    50   Input ~ 0
+Text GLabel 1250 2150 0    50   Input ~ 0
 ZLimit
 $Comp
 L Connector:Conn_01x03_Male J?
@@ -294,19 +294,19 @@ $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 613E2DB5
-P 3900 2200
-F 0 "#PWR?" H 3900 1950 50  0001 C CNN
-F 1 "GND" V 3905 2072 50  0000 R CNN
-F 2 "" H 3900 2200 50  0001 C CNN
-F 3 "" H 3900 2200 50  0001 C CNN
-	1    3900 2200
+P 3900 2400
+F 0 "#PWR?" H 3900 2150 50  0001 C CNN
+F 1 "GND" V 3905 2272 50  0000 R CNN
+F 2 "" H 3900 2400 50  0001 C CNN
+F 3 "" H 3900 2400 50  0001 C CNN
+	1    3900 2400
 	0    -1   -1   0   
 $EndComp
-Text GLabel 3900 2100 2    50   Input ~ 0
-StepperEN
 Text GLabel 3900 2300 2    50   Input ~ 0
+StepperEN
+Text GLabel 3900 2200 2    50   Input ~ 0
 StepperPWM
-Text GLabel 3900 2400 2    50   Input ~ 0
+Text GLabel 3900 2100 2    50   Input ~ 0
 StepperDIR
 Text GLabel 1250 1750 0    50   Input ~ 0
 Gripper

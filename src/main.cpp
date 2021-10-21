@@ -11,7 +11,7 @@
 #include <Servo.h> 
 #include <AccelStepper.h>
 
-#define LED         13 
+// #define LED         13 
 #define joint2_pin  2
 #define joint3_pin  3
 #define joint4_pin  4
@@ -24,8 +24,13 @@
 
 #define BUF_LEN     20
 
-#define STOP        's'
+#define STOP        '#'
 #define HOME        'h' 
+
+#define USART_BAUDRATE 115200
+#define MYUBRR (((F_CPU / (USART_BAUDRATE * 16UL))))
+#define TXBUFFSIZE 64
+#define RXbufSize 64 //Rx buffer size in bytes
 
 //------------------ Object Definitions --------------------- // 
 // create servo object to control a servo joints
@@ -40,7 +45,7 @@ AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 void handleSerial (void);
 void homeStepper(void);
 void moveStepper(int steps);
-int SerialStopChecker(void);
+void SerialWrite(const char* array);
 
 // ----------------- Globals -----------------------------=---//
 long int homeSpeed  = 550; 
@@ -49,7 +54,10 @@ long int homeAccel  = 300;
 long int MaxAccel   = 500; 
 long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
-String sdata = "";
+char TXBUFF[TXBUFFSIZE];
+int TXINDEX = 0;
+char RXbuff[RXbufSize];
+int rxbuffIndex = 0;
 double Time = 0;
 double currentTime = 0;
 double previousTime = 0;
@@ -61,15 +69,25 @@ bool SafeToRun = false;
 int LEDstate = 0;
 void setup() { 
   // --------------- Pin setup ------------------ //
-  pinMode(LED, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(joint2_pin, OUTPUT);
   pinMode(joint3_pin, OUTPUT);
   pinMode(joint4_pin, OUTPUT);
   pinMode(Gripper_pin, OUTPUT);
   pinMode(Z_en, OUTPUT);
   pinMode(Z_homeSw, INPUT);
+  UCSR0B = (1 << RXEN0) | (1 << TXEN0);   // Turn on the transmission and reception circuitry
+  UCSR0C = (1 << UCSZ00) | (1 << UCSZ01); // Use 8-bit character sizes
+
+  UBRR0H = (MYUBRR >> 8); // Load upper 8-bits of the baud rate value into the high byte of the UBRR register
+  UBRR0L = MYUBRR; // Load lower 8-bits of the baud rate value into the low byte of the UBRR register
+
+  UCSR0B |= (1 << RXCIE0); // Enable the USART Recieve Complete interrupt (USART_RXC)
+  UCSR0B |= (1 << TXCIE0); // Enable the USART Transmit Complete interrupt (USART_TXC)
+
+  sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
   
-  Serial.begin(115200);
+  // Serial.begin(115200);
 
   joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 2
   joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 3
@@ -87,12 +105,46 @@ void setup() {
   while(Homed == false){
     currentTime = millis();
     if ((currentTime - Time) >= 1000){
-      Serial.println("home me please good sirs");
+      SerialWrite("home me please good sirs\n");
+      // Serial.println("home me please good sirs");
       Time = currentTime;
     }
     handleSerial();
   }
 } 
+
+//intrerupt on receive
+ISR (USART_RX_vect) //this is the Received Byte ISR
+{
+   char ReceivedByte;
+   ReceivedByte = UDR0; // Fetch the received byte value into the variable "ByteReceived"
+   if(ReceivedByte == '#')
+   {
+    // stop Z axis
+    stepperZ.stop();
+    SafeToRun = false;
+    SerialWrite("Stepper stopped\n");
+    digitalWrite(LED_BUILTIN, HIGH);
+   }
+   else{
+     if(rxbuffIndex < RXbufSize){
+     RXbuff[rxbuffIndex] = ReceivedByte; //store byte in global array to allow code to read it else where
+     }
+     rxbuffIndex++;
+   }
+   
+}
+
+ISR (USART_TX_vect) //This is the TX complete ISR
+{
+  digitalWrite(LED_BUILTIN, LOW);
+  if(TXBUFF[TXINDEX]) //if it is not the end of the string
+  {
+    UCSR0B |= (1 << TXB80); //clear the flag
+    UDR0 = TXBUFF[TXINDEX]; //load the next byte in
+    TXINDEX++;  //increment the counter
+  }
+}
  
  
 void loop() { 
@@ -100,80 +152,105 @@ void loop() {
   currentTime = millis();
   if ((currentTime - Time) >= 1000){
     LEDstate ^= 1;
-    digitalWrite(LED, LEDstate); // -- flash led just cos
+    digitalWrite(LED_BUILTIN, LEDstate); // -- flash led just cos
     Time = currentTime;
   }
   }
 
 void handleSerial(){
-  static char sdata[BUF_LEN], *pSdata=sdata;
-  byte ch;
   int Angle;
   int steps;
-
-  if (Serial.available()){
-    digitalWrite(LED, HIGH);
+  if (rxbuffIndex>=RXbufSize) {
+      rxbuffIndex = 0;
+      SerialWrite("BUFFER OVERRUN\n");
+      // Serial.print("BUFFER OVERRUN\n"); 
+    }
+  
+  if (rxbuffIndex > 0 && RXbuff[rxbuffIndex-1]=='\n'){  //if there is something in the buffer an the last character is a newline
+    digitalWrite(LED_BUILTIN, HIGH);
     // delay(100);
     SafeToRun = true;
-    ch = Serial.read();
     if (Homed == false){
-      if (ch == HOME){
+      if (RXbuff[0] == HOME){
+        rxbuffIndex = 0;
         homeStepper();
         Homed = true;
-        Serial.println("... Ready ...");
+        SerialWrite("... Ready ...\n");
+        // Serial.println("... Ready ...");
       }
     }
-    if ((pSdata - sdata) >= BUF_LEN-1) {
-      pSdata--; 
-      Serial.print("BUFFER OVERRUN\n"); 
-    }
-    *pSdata++ = (char)ch;
-    if ((ch=='\n') && (Homed == true)){
-      pSdata--;
-      *pSdata = '\0';
     
-      switch (sdata[0]) {
+    else if ((Homed == true)){
+      RXbuff[rxbuffIndex-1]='\0'; //add a null character to the end of the char array
+      switch (RXbuff[0]) {
         case '2':
           // servo 1 on joint 2
-          if (strlen(sdata)>1){
-            Angle = atoi(&sdata[1]);
+          if (rxbuffIndex>1){
+
+            Angle = atoi(&RXbuff[1]);
             joint2.write(Angle);
-            Serial.print("Joint 2 moved to:"); Serial.println(Angle);
+            SerialWrite("Joint 2 moved to:");
+            char intstr [10];
+            itoa(Angle, intstr, 10);
+            SerialWrite(intstr);
+            SerialWrite("\n");
+            // Serial.print("Joint 2 moved to:"); 
+            // Serial.println(Angle);
             }
           break;
 
         case '3':
           // servo 2 on joint 3
-          if (strlen(sdata)>1){
-            Angle = atoi(&sdata[1]);
+          if (rxbuffIndex>1){
+            Angle = atoi(&RXbuff[1]);
             joint3.write(Angle);
-            Serial.print("Joint 3 moved to:"); Serial.println(Angle);
+            SerialWrite("Joint 3 moved to:");
+            char intstr [10];
+            itoa(Angle, intstr, 10);
+            SerialWrite(intstr);
+            SerialWrite("\n");
+            // Serial.print("Joint 3 moved to:"); Serial.println(Angle);
             }
           break;
 
           case '4':
           // servo 3 on joint 4
-          if (strlen(sdata)>1){
-            Angle = atoi(&sdata[1]);
+          if (rxbuffIndex>1){
+            Angle = atoi(&RXbuff[1]);
             joint3.write(Angle);
-            Serial.print("Joint 4 moved to:"); Serial.println(Angle);
+            SerialWrite("Joint 4 moved to:");
+            char intstr [10];
+            itoa(Angle, intstr, 10);
+            SerialWrite(intstr);
+            SerialWrite("\n");
+            // Serial.print("Joint 4 moved to:"); Serial.println(Angle);
             }
           break;
 
         case 'G':
           // servo Gripper
-          if (strlen(sdata)>1){ 
-            Angle = atoi(&sdata[1]);
+          if (rxbuffIndex>1){ 
+            Angle = atoi(&RXbuff[1]);
             Gripper.write(Angle);
-            Serial.print("Gripper moved to:"); Serial.println(Angle);
+            SerialWrite("Gripper moved to:");
+            char intstr [10];
+            itoa(Angle, intstr, 10);
+            SerialWrite(intstr);
+            SerialWrite("\n");
+            // Serial.print("Gripper moved to:"); Serial.println(Angle);
             }
           break;
 
         case 'Z':
           // Z stepper call
-          if (strlen(sdata)>1){
-            steps = atoi(&sdata[1]);
-            Serial.print("Z axis moved to:"); Serial.println(steps);
+          if (rxbuffIndex>1){
+            steps = atoi(&RXbuff[1]);
+            SerialWrite("Z-Axis moved to:");
+            char intstr [10];
+            itoa(steps, intstr, 10);
+            SerialWrite(intstr);
+            SerialWrite("\n");
+            // Serial.print("Z axis moved to:"); Serial.println(steps);
             moveStepper(steps);
             }
           break;
@@ -181,21 +258,24 @@ void handleSerial(){
         case HOME:
           // Home Z axis
           homeStepper();
-          Serial.println("Stepper homed");
+          SerialWrite("Stepper homed\n");
+          // Serial.println("Stepper homed");
           break;
 
         case STOP:
-          // Home Z axis
+          // stop Z axis
           stepperZ.stop();
-          Serial.println("Stepper stopped");
+          SerialWrite("Stepper stopped\n");
+          // Serial.println("Stepper stopped");
           break;
         
         
-        default: Serial.println(sdata);
+        default: SerialWrite(RXbuff); 
+                // Serial.println(sdata);
       }
-
-      pSdata = sdata;
-      Serial.println("... Ready ...");
+      rxbuffIndex = 0;
+      SerialWrite("... Ready ...\n");
+      // Serial.println("... Ready ...");
     }
   }
   SafeToRun = false;
@@ -207,54 +287,43 @@ void homeStepper(void){
   stepperZ.setAcceleration(homeAccel);
   stepperZ.moveTo(-30000);
 
-  Serial.print("Stepper Z is Homing . . . . . . . . . . . ");
+  // Serial.print("Stepper Z is Homing . . . . . . . . . . . ");
+  SerialWrite("Stepper Z is Homing . . . . . . . . . . . \n");
   // limit switch is pulled down so goes high when pressed
-  while ((digitalRead(Z_homeSw) == LOW) && (SafeToRun == true)) {  // Make the Stepper move CCW until the switch is activated
-    if (Serial.available() > 0){
-      char c = Serial.read();
-      if (c == STOP){
-        Serial.println("Stop");
-        stepperZ.stop();
-        SafeToRun = false;
-        return;
-      }  
-    }    
+  while ((digitalRead(Z_homeSw) == LOW) && (SafeToRun == true)) {  // Make the Stepper move CCW until the switch is activated   
     stepperZ.moveTo(init_homing);  // Set the position to move to
     init_homing--;  // Decrease by 1 for next move if needed
     stepperZ.run();  // Start moving the stepper
-    delay(5);
+    // delay(5);
   }
   init_homing = -1;
   stepperZ.setCurrentPosition(0); 
-  Serial.println("Stepper Z is Homed \n");
+  delay(5);
+  // Serial.println("Stepper Z is Homed \n");
+  SerialWrite("Stepper Z is Homed \n");
 
 }
 
 void moveStepper(int steps){
   stepperZ.moveTo(steps);
-  delay(5);
+  // delay(5);
   while((stepperZ.distanceToGo() != 0) && (SafeToRun == true)){
-    SerialStopChecker(); 
     stepperZ.run(); 
-    delay(5);
+    // delay(5);
   }
-  Serial.print("Z stopped at: "); Serial.println(stepperZ.currentPosition());
-
-
+  SerialWrite("Z stopped at: ");
+  char intstr [10];
+  itoa(stepperZ.currentPosition(), intstr, 10);
+  SerialWrite(intstr);
+  SerialWrite("\n");
+  // Serial.print("Z stopped at: "); Serial.println(stepperZ.currentPosition());
 }
-int SerialStopChecker(void){
-  if (Serial.available() > 0){
-      char c = Serial.read();
-      if (c == STOP){
-        Serial.println("Stop");
-        stepperZ.stop();
-        SafeToRun = false;
-        delay(5);
-        return 0;
-      } 
-      else{
-        return 1;
-      }
-  } 
-  return 1;
+
+
+void SerialWrite(const char* array) //to write with the Interrupt driven, I created this function
+{
+  TXINDEX = 1;  //Set the index to be the second character in the string/array
+  strcpy(TXBUFF, array);
+  UDR0 = TXBUFF[0]; //load the first character into the UART0 TX/RX buffer
+  delay(5);
 }

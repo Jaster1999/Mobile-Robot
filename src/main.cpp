@@ -113,7 +113,7 @@ void setup() {
   //--------Servo setup-------------//
   joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 2
   joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 3
-  joint4.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 4
+  joint4.attach(joint4_pin, 790, 2150);  // attaches the servo on pin 4
   Gripper.attach(Gripper_pin, 790, 2150);  // attaches the servo on pin 5
 
   sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 

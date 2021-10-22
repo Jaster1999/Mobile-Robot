@@ -4,14 +4,12 @@
 // 3 x Servos to drive Joint 2, 3 and gripper
 
 // To do:  - Confirm pin selection with Stan
-//         - Add interrupt capability
-//         - Add Speed control to servos
 
 #include <Arduino.h>
 #include <Servo.h> 
 #include <AccelStepper.h>
 
-// #define LED         13 
+// #define LED         13 // No need to do this, arduino already have LEDBUILTIN defined
 #define joint2_pin  2
 #define joint3_pin  3
 #define joint4_pin  4
@@ -22,11 +20,12 @@
 #define Z_dir       A4    
 #define Z_stp       A5    
 
-#define BUF_LEN     20
+// #define BUF_LEN     20
 
 #define STOP        '#'
 #define HOME        'h' 
 
+//UART CONSTs
 #define USART_BAUDRATE 115200
 #define MYUBRR (((F_CPU / (USART_BAUDRATE * 16UL))))
 #define TXBUFFSIZE 64
@@ -54,19 +53,28 @@ long int homeAccel  = 300;
 long int MaxAccel   = 500; 
 long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
-char TXBUFF[TXBUFFSIZE];
-int TXINDEX = 0;
-char RXbuff[RXbufSize];
-int rxbuffIndex = 0;
+char TXBUFF[TXBUFFSIZE];  //TX buffer Char array of size TXBUFFSIZE
+int TXINDEX = 0;  // Index for TX buffer.  To know what character to send next
+char RXbuff[RXbufSize];  //RX buffer Char array of size RXBUFFSIZE.  Received characters will be stored here
+int rxbuffIndex = 0;  // RX buffer index.  To know where the most recent character was stored in the array
 double Time = 0;
 double currentTime = 0;
 double previousTime = 0;
+
+//------Variables used for speed control of servos.  Volatile as they are to be used in an ISR
+volatile int Joint2Setpoint = 0;
+volatile int Joint3Setpoint = 0;
+volatile int Joint4Setpoint = 0;
+volatile int Joint2CurrentPos = 0;
+volatile int Joint3CurrentPos = 0;
+volatile int Joint4CurrentPos = 0;
+bool ServosRun = true;
 
 int i = 0;
 int k = 0;
 
 bool SafeToRun = false;
-int LEDstate = 0;
+// int LEDstate = 0;
 void setup() { 
   // --------------- Pin setup ------------------ //
   pinMode(LED_BUILTIN, OUTPUT);
@@ -76,6 +84,9 @@ void setup() {
   pinMode(Gripper_pin, OUTPUT);
   pinMode(Z_en, OUTPUT);
   pinMode(Z_homeSw, INPUT);
+
+  cli();  //Disable interrupts while we setup stuff
+  //-----------Serial Interrupt setup-------------//
   UCSR0B = (1 << RXEN0) | (1 << TXEN0);   // Turn on the transmission and reception circuitry
   UCSR0C = (1 << UCSZ00) | (1 << UCSZ01); // Use 8-bit character sizes
 
@@ -85,15 +96,27 @@ void setup() {
   UCSR0B |= (1 << RXCIE0); // Enable the USART Recieve Complete interrupt (USART_RXC)
   UCSR0B |= (1 << TXCIE0); // Enable the USART Transmit Complete interrupt (USART_TXC)
 
-  sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
   
-  // Serial.begin(115200);
-
+  
+  //-------Timer 2 setup for interrupt---------//
+  // interrupt time = 1/(16Mhz/1024) * 127 =  8.128ms;
+  TCCR2A = 0;                 // Reset entire TCCR1A to 0 
+  TCCR2B = 0;                 // Reset entire TCCR1B to 0
+  TCCR2B |= (1<<CS20|1<<CS21|1<<CS22);  // set CS20, CS21 and CS22 to 1 to get a prescalar of 1024
+  TIMSK2 |= (1<<OCIE2A);  // Set OCIE2A to 1 to enable compare match A
+  TCCR2A |= (1<<WGM21); // Set WGM21 to 1 to enable CTC mode (Clear Timer on Compare match)
+  TCNT2 = 0; //Clear the timer 2 counter
+  OCR2A = 127;  // set compare register A to this value 
+  //decreasing the above value will decrease the time to interrupt
+  //This will increase the speed of the servos
+  
+  //--------Servo setup-------------//
   joint2.attach(joint2_pin, 790, 2150);  // attaches the servo on pin 2
   joint3.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 3
   joint4.attach(joint3_pin, 790, 2150);  // attaches the servo on pin 4
   Gripper.attach(Gripper_pin, 790, 2150);  // attaches the servo on pin 5
 
+  sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
 
   // ----------------- set servos to go to initial angle
   joint2.write(0);  
@@ -123,8 +146,9 @@ ISR (USART_RX_vect) //this is the Received Byte ISR
     // stop Z axis
     stepperZ.stop();
     SafeToRun = false;
+    ServosRun = false;
     SerialWrite("Stepper stopped\n");
-    digitalWrite(LED_BUILTIN, HIGH);
+    // digitalWrite(LED_BUILTIN, HIGH);
    }
    else{
      if(rxbuffIndex < RXbufSize){
@@ -137,12 +161,49 @@ ISR (USART_RX_vect) //this is the Received Byte ISR
 
 ISR (USART_TX_vect) //This is the TX complete ISR
 {
-  digitalWrite(LED_BUILTIN, LOW);
+  // digitalWrite(LED_BUILTIN, LOW);
   if(TXBUFF[TXINDEX]) //if it is not the end of the string
   {
     UCSR0B |= (1 << TXB80); //clear the flag
     UDR0 = TXBUFF[TXINDEX]; //load the next byte in
     TXINDEX++;  //increment the counter
+  }
+}
+
+// Timer 2 ISR
+ISR(TIMER2_COMPA_vect){                            
+  PORTB ^= 0x20; //toggle the LED
+  if(ServosRun){
+    if(Joint2CurrentPos>Joint2Setpoint)
+    {
+      Joint2CurrentPos--;
+      joint2.write(Joint2CurrentPos);
+    }
+    else if (Joint2CurrentPos<Joint2Setpoint)
+    {
+      Joint2CurrentPos++;
+      joint2.write(Joint2CurrentPos);
+    }
+    if(Joint3CurrentPos>Joint3Setpoint)
+    {
+      Joint3CurrentPos--;
+      joint3.write(Joint3CurrentPos);
+    }
+    else if (Joint3CurrentPos<Joint3Setpoint)
+    {
+      Joint3CurrentPos++;
+      joint3.write(Joint3CurrentPos);
+    }
+    if(Joint4CurrentPos>Joint4Setpoint)
+    {
+      Joint4CurrentPos--;
+      joint4.write(Joint4CurrentPos);
+    }
+    else if (Joint4CurrentPos<Joint4Setpoint)
+    {
+      Joint4CurrentPos++;
+      joint4.write(Joint4CurrentPos);
+    }
   }
 }
  
@@ -151,8 +212,10 @@ void loop() {
   handleSerial();
   currentTime = millis();
   if ((currentTime - Time) >= 1000){
-    LEDstate ^= 1;
-    digitalWrite(LED_BUILTIN, LEDstate); // -- flash led just cos
+    // LEDstate ^= 1;
+    // digitalWrite(LED_BUILTIN, LEDstate); // -- flash led just cos
+    // The code below is a cleaner way of toggling the LED
+    PORTB ^= 0x20; //toggle the LED 
     Time = currentTime;
   }
   }
@@ -167,8 +230,9 @@ void handleSerial(){
     }
   
   if (rxbuffIndex > 0 && RXbuff[rxbuffIndex-1]=='\n'){  //if there is something in the buffer an the last character is a newline
-    digitalWrite(LED_BUILTIN, HIGH);
+    // digitalWrite(LED_BUILTIN, HIGH);
     // delay(100);
+    ServosRun = true;
     SafeToRun = true;
     if (Homed == false){
       if (RXbuff[0] == HOME){
@@ -188,7 +252,8 @@ void handleSerial(){
           if (rxbuffIndex>1){
 
             Angle = atoi(&RXbuff[1]);
-            joint2.write(Angle);
+            Joint2Setpoint = Angle;
+            // joint2.write(Angle);
             SerialWrite("Joint 2 moved to:");
             char intstr [10];
             itoa(Angle, intstr, 10);
@@ -203,7 +268,8 @@ void handleSerial(){
           // servo 2 on joint 3
           if (rxbuffIndex>1){
             Angle = atoi(&RXbuff[1]);
-            joint3.write(Angle);
+            Joint3Setpoint = Angle;
+            // joint3.write(Angle);
             SerialWrite("Joint 3 moved to:");
             char intstr [10];
             itoa(Angle, intstr, 10);
@@ -217,7 +283,8 @@ void handleSerial(){
           // servo 3 on joint 4
           if (rxbuffIndex>1){
             Angle = atoi(&RXbuff[1]);
-            joint3.write(Angle);
+            Joint4Setpoint = Angle;
+            // joint4.write(Angle);
             SerialWrite("Joint 4 moved to:");
             char intstr [10];
             itoa(Angle, intstr, 10);
@@ -260,13 +327,6 @@ void handleSerial(){
           homeStepper();
           SerialWrite("Stepper homed\n");
           // Serial.println("Stepper homed");
-          break;
-
-        case STOP:
-          // stop Z axis
-          stepperZ.stop();
-          SerialWrite("Stepper stopped\n");
-          // Serial.println("Stepper stopped");
           break;
         
         

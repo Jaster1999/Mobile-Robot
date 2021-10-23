@@ -68,6 +68,8 @@ volatile int Joint4Setpoint = 0;
 volatile int Joint2CurrentPos = 0;
 volatile int Joint3CurrentPos = 0;
 volatile int Joint4CurrentPos = 0;
+volatile byte count = 0;
+#define speed 4 // increase this to increase the delay between servo steps
 bool ServosRun = true;
 
 int i = 0;
@@ -106,7 +108,7 @@ void setup() {
   TIMSK2 |= (1<<OCIE2A);  // Set OCIE2A to 1 to enable compare match A
   TCCR2A |= (1<<WGM21); // Set WGM21 to 1 to enable CTC mode (Clear Timer on Compare match)
   TCNT2 = 0; //Clear the timer 2 counter
-  OCR2A = 127;  // set compare register A to this value 
+  OCR2A = 255;  // set compare register A to this value 
   //decreasing the above value will decrease the time to interrupt
   //This will increase the speed of the servos
   
@@ -173,38 +175,43 @@ ISR (USART_TX_vect) //This is the TX complete ISR
 // Timer 2 ISR
 ISR(TIMER2_COMPA_vect){                            
   PORTB ^= 0x20; //toggle the LED
-  if(ServosRun){
-    if(Joint2CurrentPos>Joint2Setpoint)
-    {
-      Joint2CurrentPos--;
-      joint2.write(Joint2CurrentPos);
-    }
-    else if (Joint2CurrentPos<Joint2Setpoint)
-    {
-      Joint2CurrentPos++;
-      joint2.write(Joint2CurrentPos);
-    }
-    if(Joint3CurrentPos>Joint3Setpoint)
-    {
-      Joint3CurrentPos--;
-      joint3.write(Joint3CurrentPos);
-    }
-    else if (Joint3CurrentPos<Joint3Setpoint)
-    {
-      Joint3CurrentPos++;
-      joint3.write(Joint3CurrentPos);
-    }
-    if(Joint4CurrentPos>Joint4Setpoint)
-    {
-      Joint4CurrentPos--;
-      joint4.write(Joint4CurrentPos);
-    }
-    else if (Joint4CurrentPos<Joint4Setpoint)
-    {
-      Joint4CurrentPos++;
-      joint4.write(Joint4CurrentPos);
+  if(count % speed == 0)
+  {
+    count = 0;
+    if(ServosRun){
+      if(Joint2CurrentPos>Joint2Setpoint)
+      {
+        Joint2CurrentPos--;
+        joint2.write(Joint2CurrentPos);
+      }
+      else if (Joint2CurrentPos<Joint2Setpoint)
+      {
+        Joint2CurrentPos++;
+        joint2.write(Joint2CurrentPos);
+      }
+      if(Joint3CurrentPos>Joint3Setpoint)
+      {
+        Joint3CurrentPos--;
+        joint3.write(Joint3CurrentPos);
+      }
+      else if (Joint3CurrentPos<Joint3Setpoint)
+      {
+        Joint3CurrentPos++;
+        joint3.write(Joint3CurrentPos);
+      }
+      if(Joint4CurrentPos>Joint4Setpoint)
+      {
+        Joint4CurrentPos--;
+        joint4.write(Joint4CurrentPos);
+      }
+      else if (Joint4CurrentPos<Joint4Setpoint)
+      {
+        Joint4CurrentPos++;
+        joint4.write(Joint4CurrentPos);
+      }
     }
   }
+  count++;
 }
  
  

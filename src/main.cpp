@@ -56,7 +56,7 @@ AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 
 //------------------ Function prototypes --------------------- // 
 void handleSerial (void);
-void homeStepper(void);
+void homeStepper(void); // Home stepper and set Servos to the default value from EEPROM
 void moveStepper(int steps);
 void SerialWrite(const char* array);
 bool Validate(int angle, int jointNum);
@@ -135,24 +135,6 @@ void setup() {
 
   sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
 
-  // ----------------- set servos to go to initial angle from angles stored in memory
-  int joint2Mem = EEPROM.read(Joint2LocationAddr);
-  int joint3Mem = EEPROM.read(Joint3LocationAddr);
-  int joint4Mem = EEPROM.read(Joint4LocationAddr);
-  char msg[10];
-  SerialWrite("EEPROM Values read: ");
-  SerialWrite(itoa(joint2Mem, msg, 10));
-  SerialWrite(", ");
-  SerialWrite(itoa(joint3Mem, msg, 10));
-  SerialWrite(", ");
-  SerialWrite(itoa(joint4Mem, msg, 10));
-  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem);}
-  else{joint2.write(0);}
-  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem);}
-  else{joint3.write(0);}
-  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem);}
-  else{joint4.write(0);}
-  Gripper.write(0);
   Time = millis();
   currentTime = millis();
   while(Homed == false){
@@ -381,8 +363,28 @@ void handleSerial(){
   }
   SafeToRun = false;
 }
+// Home stepper and set Servos to the default value from EEPROM
+void homeStepper(void){ 
+  // ----------------- set servos to go to initial angle from angles stored in memory
+  int joint2Mem = EEPROM.read(Joint2LocationAddr);
+  int joint3Mem = EEPROM.read(Joint3LocationAddr);
+  int joint4Mem = EEPROM.read(Joint4LocationAddr);
+  char msg[10];
+  SerialWrite("EEPROM Values read: ");
+  SerialWrite(itoa(joint2Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint3Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint4Mem, msg, 10));
+  SerialWrite("\n");
+  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem);}
+  else{joint2.write(0);}
+  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem);}
+  else{joint3.write(0);}
+  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem);}
+  else{joint4.write(0);}
+  Gripper.write(0);
 
-void homeStepper(void){
   // --------------------- setup up homing speeds ---------- //
   stepperZ.setMaxSpeed(homeSpeed);
   stepperZ.setAcceleration(homeAccel);

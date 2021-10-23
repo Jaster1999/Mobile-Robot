@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <Servo.h> 
 #include <AccelStepper.h>
+#include <EEPROM.h>
 
 // #define LED         13 // No need to do this, arduino already have LEDBUILTIN defined
 #define joint2_pin  2
@@ -31,6 +32,19 @@
 #define TXBUFFSIZE 64
 #define RXbufSize 64 //Rx buffer size in bytes
 
+//-------EEPROM Constants---------
+#define Joint2LocationAddr 0
+#define Joint3LocationAddr 1
+#define Joint4LocationAddr 2
+
+//---------Joint Angle Limits--------------
+#define Joint2Max 180
+#define Joint2Min 0
+#define Joint3Max 180
+#define Joint3Min 0
+#define Joint4Max 180
+#define Joint4Min 0
+
 //------------------ Object Definitions --------------------- // 
 // create servo object to control a servo joints
 Servo joint2;  
@@ -45,6 +59,7 @@ void handleSerial (void);
 void homeStepper(void);
 void moveStepper(int steps);
 void SerialWrite(const char* array);
+bool Validate(int angle, int jointNum);
 
 // ----------------- Globals -----------------------------=---//
 long int homeSpeed  = 550; 
@@ -120,10 +135,23 @@ void setup() {
 
   sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
 
-  // ----------------- set servos to go to initial angle
-  joint2.write(0);  
-  joint3.write(0);
-  joint4.write(0);
+  // ----------------- set servos to go to initial angle from angles stored in memory
+  int joint2Mem = EEPROM.read(Joint2LocationAddr);
+  int joint3Mem = EEPROM.read(Joint3LocationAddr);
+  int joint4Mem = EEPROM.read(Joint4LocationAddr);
+  char msg[10];
+  SerialWrite("EEPROM Values read: ");
+  SerialWrite(itoa(joint2Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint3Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint4Mem, msg, 10));
+  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem);}
+  else{joint2.write(0);}
+  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem);}
+  else{joint3.write(0);}
+  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem);}
+  else{joint4.write(0);}
   Gripper.write(0);
   Time = millis();
   currentTime = millis();
@@ -174,7 +202,7 @@ ISR (USART_TX_vect) //This is the TX complete ISR
 
 // Timer 2 ISR
 ISR(TIMER2_COMPA_vect){                            
-  PORTB ^= 0x20; //toggle the LED
+  // PORTB ^= 0x20; //toggle the LED
   if(count % speed == 0)
   {
     count = 0;
@@ -183,31 +211,37 @@ ISR(TIMER2_COMPA_vect){
       {
         Joint2CurrentPos--;
         joint2.write(Joint2CurrentPos);
+        EEPROM.write(Joint2LocationAddr, Joint2CurrentPos);
       }
       else if (Joint2CurrentPos<Joint2Setpoint)
       {
         Joint2CurrentPos++;
         joint2.write(Joint2CurrentPos);
+        EEPROM.write(Joint2LocationAddr, Joint2CurrentPos);
       }
       if(Joint3CurrentPos>Joint3Setpoint)
       {
         Joint3CurrentPos--;
         joint3.write(Joint3CurrentPos);
+        EEPROM.write(Joint3LocationAddr, Joint3CurrentPos);
       }
       else if (Joint3CurrentPos<Joint3Setpoint)
       {
         Joint3CurrentPos++;
         joint3.write(Joint3CurrentPos);
+        EEPROM.write(Joint3LocationAddr, Joint3CurrentPos);
       }
       if(Joint4CurrentPos>Joint4Setpoint)
       {
         Joint4CurrentPos--;
         joint4.write(Joint4CurrentPos);
+        EEPROM.write(Joint4LocationAddr, Joint4CurrentPos);
       }
       else if (Joint4CurrentPos<Joint4Setpoint)
       {
         Joint4CurrentPos++;
         joint4.write(Joint4CurrentPos);
+        EEPROM.write(Joint4LocationAddr, Joint4CurrentPos);
       }
     }
   }
@@ -393,4 +427,27 @@ void SerialWrite(const char* array) //to write with the Interrupt driven, I crea
   strcpy(TXBUFF, array);
   UDR0 = TXBUFF[0]; //load the first character into the UART0 TX/RX buffer
   delay(5);
+}
+
+bool Validate(int angle, int jointNum)
+{
+  switch (jointNum)
+  {
+  case 2:
+    if(angle >= Joint2Min && angle <= Joint2Max){return true;}
+    else{return false;}
+    break;
+  case 3:
+    if(angle >= Joint3Min && angle <= Joint3Max){return true;}
+    else{return false;}
+    break;
+  case 4:
+    if(angle >= Joint4Min && angle <= Joint4Max){return true;}
+    else{return false;}
+    break;
+  
+  default:
+    return false;
+    break;
+  }
 }

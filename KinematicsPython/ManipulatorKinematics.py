@@ -75,10 +75,7 @@ class Manipulator:
         return Joint1, Joint2, Joint3, Joint4
     
     def AngleValidator(self, angle):
-        #convert the angle to be from 0-360º
-        if(angle < 0):
-            angle += 360
-        #servos can only move 0-180º so half the angle and round to int
+        #current angle can be ±180º, need to convert to 0-180 for servo with 0º being 90º on the servo
         angle = angle/2
-        angle = round(angle)
+        angle += 90
         return angle

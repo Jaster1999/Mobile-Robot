@@ -19,7 +19,8 @@
 #define Z_en        6    
 #define Z_homeSw    9
 #define Z_dir       A4    
-#define Z_stp       A5    
+#define Z_stp       A5 
+#define StepsPermm  200   
 
 // #define BUF_LEN     20
 
@@ -37,13 +38,15 @@
 #define Joint3LocationAddr 1
 #define Joint4LocationAddr 2
 
-//---------Joint Angle Limits--------------
-#define Joint2Max 180
-#define Joint2Min 0
-#define Joint3Max 180
-#define Joint3Min 0
-#define Joint4Max 180
-#define Joint4Min 0
+//---------Joint Angle/distance Limits--------------
+#define StepperMax  300 //mm
+#define StepperMin  0
+#define Joint2Max   180
+#define Joint2Min   0
+#define Joint3Max   180
+#define Joint3Min   0
+#define Joint4Max   180
+#define Joint4Min   0
 
 //------------------ Object Definitions --------------------- // 
 // create servo object to control a servo joints
@@ -62,10 +65,10 @@ void SerialWrite(const char* array);
 bool Validate(int angle, int jointNum);
 
 // ----------------- Globals -----------------------------=---//
-long int homeSpeed  = 550; 
-long int maxSpeed   = 1000; 
-long int homeAccel  = 300; 
-long int MaxAccel   = 500; 
+#define homeSpeed     550
+#define maxSpeed      1000
+#define homeAccel     300
+#define MaxAccel      500 
 long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
 char TXBUFF[TXBUFFSIZE];  //TX buffer Char array of size TXBUFFSIZE
@@ -245,7 +248,8 @@ void loop() {
 
 void handleSerial(){
   int Angle;
-  int steps;
+  int Dist_mm;
+  uint32_t steps; //Made steps a uint32 to allow it to go over 65535 steps, just in case of microstepping or something
   if (rxbuffIndex>=RXbufSize) {
       rxbuffIndex = 0;
       SerialWrite("BUFFER OVERRUN\n");
@@ -275,13 +279,17 @@ void handleSerial(){
           if (rxbuffIndex>1){
 
             Angle = atoi(&RXbuff[1]);
-            Joint2Setpoint = Angle;
-            // joint2.write(Angle);
-            SerialWrite("Joint 2 moved to:");
-            char intstr [10];
-            itoa(Angle, intstr, 10);
-            SerialWrite(intstr);
-            SerialWrite("\n");
+            if(Validate(Angle, 2))
+            {
+              Joint2Setpoint = Angle;
+              // joint2.write(Angle);
+              SerialWrite("Joint 2 moved to:");
+              char intstr [10];
+              itoa(Angle, intstr, 10);
+              SerialWrite(intstr);
+              SerialWrite("\n");
+            }
+            else{SerialWrite("Invalid Angle Received\n");}
             // Serial.print("Joint 2 moved to:"); 
             // Serial.println(Angle);
             }
@@ -291,13 +299,17 @@ void handleSerial(){
           // servo 2 on joint 3
           if (rxbuffIndex>1){
             Angle = atoi(&RXbuff[1]);
-            Joint3Setpoint = Angle;
-            // joint3.write(Angle);
-            SerialWrite("Joint 3 moved to:");
-            char intstr [10];
-            itoa(Angle, intstr, 10);
-            SerialWrite(intstr);
-            SerialWrite("\n");
+            if(Validate(Angle, 3))
+            {
+              Joint3Setpoint = Angle;
+              // joint3.write(Angle);
+              SerialWrite("Joint 3 moved to:");
+              char intstr [10];
+              itoa(Angle, intstr, 10);
+              SerialWrite(intstr);
+              SerialWrite("\n");
+            }
+            else{SerialWrite("Invalid Angle Received\n");}
             // Serial.print("Joint 3 moved to:"); Serial.println(Angle);
             }
           break;
@@ -306,13 +318,17 @@ void handleSerial(){
           // servo 3 on joint 4
           if (rxbuffIndex>1){
             Angle = atoi(&RXbuff[1]);
-            Joint4Setpoint = Angle;
-            // joint4.write(Angle);
-            SerialWrite("Joint 4 moved to:");
-            char intstr [10];
-            itoa(Angle, intstr, 10);
-            SerialWrite(intstr);
-            SerialWrite("\n");
+            if(Validate(Angle, 4))
+            {
+              Joint4Setpoint = Angle;
+              // joint4.write(Angle);
+              SerialWrite("Joint 4 moved to:");
+              char intstr [10];
+              itoa(Angle, intstr, 10);
+              SerialWrite(intstr);
+              SerialWrite("\n");
+            }
+            else{SerialWrite("Invalid Angle Received\n");}
             // Serial.print("Joint 4 moved to:"); Serial.println(Angle);
             }
           break;
@@ -334,14 +350,21 @@ void handleSerial(){
         case 'Z':
           // Z stepper call
           if (rxbuffIndex>1){
-            steps = atoi(&RXbuff[1]);
-            SerialWrite("Z-Axis moved to:");
-            char intstr [10];
-            itoa(steps, intstr, 10);
-            SerialWrite(intstr);
-            SerialWrite("\n");
+            Dist_mm = atoi(&RXbuff[1]);
+            //Note at this point steps is actually the distance in mm
+            if(Validate(steps, 1))
+            {
+              SerialWrite("Z-Axis moved to:");
+              char intstr [10];
+              itoa(steps, intstr, 10);
+              SerialWrite(intstr);
+              SerialWrite("\n");
+              steps = abs(Dist_mm*StepsPermm); //Now steps is actually steps
+              moveStepper(steps);
+            }
+            else{SerialWrite("Invalid Distance Received\n");}
             // Serial.print("Z axis moved to:"); Serial.println(steps);
-            moveStepper(steps);
+            
             }
           break;
 
@@ -431,25 +454,28 @@ void SerialWrite(const char* array) //to write with the Interrupt driven, I crea
   delay(5);
 }
 
-bool Validate(int angle, int jointNum)
+bool Validate(int Value, int jointNum)
 {
   switch (jointNum)
   {
-  case 2:
-    if(angle >= Joint2Min && angle <= Joint2Max){return true;}
-    else{return false;}
-    break;
-  case 3:
-    if(angle >= Joint3Min && angle <= Joint3Max){return true;}
-    else{return false;}
-    break;
-  case 4:
-    if(angle >= Joint4Min && angle <= Joint4Max){return true;}
-    else{return false;}
-    break;
-  
-  default:
-    return false;
-    break;
+    case 1:
+      if(Value >= StepperMin && Value <= StepperMax){return true;}
+      else{return false;}
+      break;
+    case 2:
+      if(Value >= Joint2Min && Value <= Joint2Max){return true;}
+      else{return false;}
+      break;
+    case 3:
+      if(Value >= Joint3Min && Value <= Joint3Max){return true;}
+      else{return false;}
+      break;
+    case 4:
+      if(Value >= Joint4Min && Value <= Joint4Max){return true;}
+      else{return false;}
+      break;
+    default:
+      return false;
+      break;
   }
 }

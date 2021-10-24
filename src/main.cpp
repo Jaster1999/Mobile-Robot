@@ -60,7 +60,7 @@ AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 //------------------ Function prototypes --------------------- // 
 void handleSerial (void);
 void homeStepper(void); // Home stepper and set Servos to the default value from EEPROM
-void moveStepper(int steps);
+void moveStepper(uint32_t steps);
 void SerialWrite(const char* array);
 bool Validate(int angle, int jointNum);
 
@@ -430,7 +430,7 @@ void homeStepper(void){
 
 }
 
-void moveStepper(int steps){
+void moveStepper(uint32_t steps){
   stepperZ.moveTo(steps);
   // delay(5);
   while((stepperZ.distanceToGo() != 0) && (SafeToRun == true)){

@@ -57,11 +57,17 @@ class Manipulator:
         K = Orientation[2]
         Yc = Y - I[1]*self.a4
         Xc = X - I[0]*self.a4
-        Joint1 = Z - self.l2 - self.l3 - self.l4 - self.l1
+        Joint1 = float(Z - self.l2 - self.l3 - self.l4 - self.l1)
         D = (-self.a2**2 -self.a3**2 + (Xc-self.a1)**2 + Yc**2)/(2*self.a2*self.a3)
         Joint3 = math.atan((math.sqrt(1-D**2))/(D))
         Joint2 = math.atan((Yc)/(Xc-self.a1)) - math.atan((self.a3*math.sin(Joint3))/(self.a2 + self.a3*math.cos(Joint3)))
-        Joint4 = math.atan((Y-Yc)/(X-Xc))
+        s2 = math.sin(Joint2)
+        s3 = math.sin(Joint3)
+        c2 = math.cos(Joint2)
+        c3 = math.cos(Joint3)
+        #Orientation of frame 3
+        O3 = [[c2*c3 - s2*s3, c2*s3 + c3*s2, 0],[- c2*s3 - c3*s2, c2*c3 - s2*s3, 0],[0,0,1]]
+        Joint4 = math.atan((I[1])/(I[0])) - math.atan((O3[0][1])/(O3[0][0]))
         #convert radians to degrees
         Joint2 = math.degrees(Joint2)
         Joint3 = math.degrees(Joint3)

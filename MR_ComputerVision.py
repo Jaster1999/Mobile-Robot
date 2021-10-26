@@ -52,3 +52,12 @@ def calibrate(camera): # function to calibrate various filters, you just get the
             cv2.destroyAllWindows()
             break
     return (hL, hH, sL, sH, vL, vH)
+
+def on_mouse(event, x, y, flags, params):
+    global clicks
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print('Seed: ' + str(x) + ', ' + str(y))
+        point = (y, x)
+        #clicks.append((y,x))
+        return (y, x)
+

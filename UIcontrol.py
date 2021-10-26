@@ -38,7 +38,8 @@ def main():
             [sg.Text("Test image: ", size=(10, 1)), sg.Input(size=(40, 1)), sg.FileBrowse(key="-IN-"), sg.Button("Calculate")],
             [sg.Button(button_text="Calibrate Obstacle Filter"), sg.Text(key="obsfiltervalues", size=(20, 1))],
             [sg.Button(button_text="Calibrate Robot Filter"), sg.Text(key="robotfiltervalues", size=(20, 1))],
-            [sg.Button(button_text="Calibrate Dot Filter"), sg.Text(key="dotfiltervalues", size=(20, 1))]]
+            [sg.Button(button_text="Calibrate Dot Filter"), sg.Text(key="dotfiltervalues", size=(20, 1))],
+            [sg.Button(button_text="Set Goal"), sg.Text(key="goalvalues", size=(20, 1))]]
 
     # 2nd attributes list
     # Handles xyz positioning for manipulator
@@ -86,11 +87,12 @@ def main():
     window = sg.Window('Manipulator and Mobile Robot UI', tabgrp, location=(0,0), resizable=True, size=(w,int(0.95*h)), keep_on_top=False)#.Finalize()
     #window.Maximize()
 
-    com_port = 'COM10'
+    com_port = 'COM1'
     x = 0
     y = 0
     z = 0
     navigate = False
+    goal_set = False
     lowerRegionBackground = np.array([99, 109, 100],np.uint8)
     upperRegionBackground = np.array([109, 255, 184],np.uint8)
     lowerRegionRobot = np.array([0, 142, 131],np.uint8)
@@ -137,8 +139,19 @@ def main():
                 filter_values = CV.calibrate(camera)
                 window["dotfiltervalues"].update(str(filter_values))
                 lowerRegionBackground = np.array([filter_values[0], filter_values[2], filter_values[5]],np.uint8)
+        if event == "Set Goal":
+                point = []
+                img = np.zeros((1080, 1920, 3))
+                cv2.namedWindow('Input')
+                cv2.setMouseCallback('Input', CV.on_mouse, 0, )
+                cv2.imshow('Input', img)
+                cv2.waitKey()
+                set_point = point
+                print(point)
+                goal =  (int(set_point[1]/20), int(set_point[0]/20))
 
-        if navigate:
+
+        if navigate and goal_set:
                 #_,img = camera.read()
                 #img = cv2.flip(img,1)
                 img = cv2.imread(values["-IN-"])

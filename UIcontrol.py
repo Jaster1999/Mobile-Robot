@@ -88,6 +88,7 @@ def main():
     #window.Maximize()
 
     com_port = 'COM1'
+    goal = []
     x = 0
     y = 0
     z = 0
@@ -142,12 +143,8 @@ def main():
         if event == "Set Goal":
                 point = []
                 img = np.zeros((1080, 1920, 3))
-                cv2.namedWindow('Input')
-                cv2.setMouseCallback('Input', CV.on_mouse, 0, )
-                cv2.imshow('Input', img)
-                cv2.waitKey()
-                set_point = point
-                print(point)
+                set_point = CV.find_point(img)
+                print(set_point)
                 goal =  (int(set_point[1]/20), int(set_point[0]/20))
 
 

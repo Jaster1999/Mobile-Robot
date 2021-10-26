@@ -5,7 +5,6 @@ import os
 import matplotlib.pyplot as plt
 import math
 import imutils
-from pymodbus.client.sync import ModbusSerialClient
 import time
 import csv
 import serial
@@ -19,16 +18,21 @@ import MR_Navigation as Nav
 
 
 def main():
-    #camera = cv2.VideoCapture(3)
+    camera = cv2.VideoCapture(3, cv2.CAP_DSHOW)
+    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     sg.theme('default1')
+    ret ,img = camera.read()
+    print(ret)
+    img = cv2.flip(img,1)
+    print(img.shape)
 
     # These are placeholder images to take the positions of images you wish to display 
-    placeholder = np.zeros((1080, 1920, 3))
-    imgbytesplaceholder = cv2.imencode(".png", placeholder)[1].tobytes()
+    imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
 
     #load images into elements
-    image_elem1 = sg.Image(key="rgb", data=imgbytesplaceholder)
-    image_elem2 = sg.Image(key="mask", data=imgbytesplaceholder)
+    image_elem1 = sg.Image(key="rgb", data=imgbytesrgb_actual)
+    image_elem2 = sg.Image(key="mask", data=imgbytesrgb_actual)
     
 
 
@@ -87,7 +91,7 @@ def main():
     window = sg.Window('Manipulator and Mobile Robot UI', tabgrp, location=(0,0), resizable=True, size=(w,int(0.95*h)), keep_on_top=False)#.Finalize()
     #window.Maximize()
 
-    com_port = 'COM1'
+    com_port = input("type comport: ")
     goal = []
     x = 0
     y = 0
@@ -142,15 +146,14 @@ def main():
                 lowerRegionBackground = np.array([filter_values[0], filter_values[2], filter_values[5]],np.uint8)
         if event == "Set Goal":
                 point = []
-                img = np.zeros((1080, 1920, 3))
                 set_point = CV.find_point(img)
-                print(set_point)
-                goal =  (int(set_point[1]/20), int(set_point[0]/20))
+                goal = (int(set_point[1]/20), int(set_point[0]/20))
+                print(goal)
 
 
         if navigate and goal_set:
-                #_,img = camera.read()
-                #img = cv2.flip(img,1)
+                _,img = camera.read()
+                img = cv2.flip(img,1)
                 img = cv2.imread(values["-IN-"])
 
                 # create dot filter, dot is the blue dot on the robot
@@ -178,6 +181,9 @@ def main():
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
                 dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
                 #cv2.imshow("Dilation adj obstacle mask", dilated_mask)
+
+                imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
+                window["rgb"].update(data=imgbytesrgb_actual)
 
                 # find the robot's centre and the blue dot and calculate the robots orientation
                 try:

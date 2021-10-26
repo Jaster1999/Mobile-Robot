@@ -83,12 +83,12 @@ double previousTime = 0;
 volatile int Joint2Setpoint = 0;
 volatile int Joint3Setpoint = 0;
 volatile int Joint4Setpoint = 0;
-volatile int Joint2CurrentPos = 0;
-volatile int Joint3CurrentPos = 0;
-volatile int Joint4CurrentPos = 0;
+volatile int Joint2CurrentPos = 90;
+volatile int Joint3CurrentPos = 90;
+volatile int Joint4CurrentPos = 90;
 volatile byte count = 0;
 #define speed 4 // increase this to increase the delay between servo steps
-bool ServosRun = true;
+bool ServosRun = false;
 
 int i = 0;
 int k = 0;
@@ -137,6 +137,24 @@ void setup() {
   Gripper.attach(Gripper_pin, 790, 2150);  // attaches the servo on pin 5
 
   sei(); // Enable the Global Interrupt Enable flag so that interrupts can be processed 
+
+  int joint2Mem = EEPROM.read(Joint2LocationAddr);
+  int joint3Mem = EEPROM.read(Joint3LocationAddr);
+  int joint4Mem = EEPROM.read(Joint4LocationAddr);
+  char msg[10];
+  SerialWrite("EEPROM Values read: ");
+  SerialWrite(itoa(joint2Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint3Mem, msg, 10));
+  SerialWrite(", ");
+  SerialWrite(itoa(joint4Mem, msg, 10));
+  SerialWrite("\n");
+  if(Validate(joint2Mem, 2)){Joint2Setpoint = joint2Mem;}
+  else{Joint2Setpoint = 0;}
+  if(Validate(joint3Mem, 3)){Joint3Setpoint = joint3Mem;}
+  else{Joint3Setpoint = 0;}
+  if(Validate(joint4Mem, 4)){Joint4Setpoint = joint4Mem;}
+  else{Joint4Setpoint = 0;}
 
   Time = millis();
   currentTime = millis();
@@ -389,23 +407,23 @@ void handleSerial(){
 // Home stepper and set Servos to the default value from EEPROM
 void homeStepper(void){ 
   // ----------------- set servos to go to initial angle from angles stored in memory
-  int joint2Mem = EEPROM.read(Joint2LocationAddr);
-  int joint3Mem = EEPROM.read(Joint3LocationAddr);
-  int joint4Mem = EEPROM.read(Joint4LocationAddr);
-  char msg[10];
-  SerialWrite("EEPROM Values read: ");
-  SerialWrite(itoa(joint2Mem, msg, 10));
-  SerialWrite(", ");
-  SerialWrite(itoa(joint3Mem, msg, 10));
-  SerialWrite(", ");
-  SerialWrite(itoa(joint4Mem, msg, 10));
-  SerialWrite("\n");
-  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem); Joint2Setpoint = joint2Mem;}
-  else{joint2.write(0);}
-  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem); Joint3Setpoint = joint3Mem;}
-  else{joint3.write(0);}
-  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem); Joint4Setpoint = joint4Mem;}
-  else{joint4.write(0);}
+  // int joint2Mem = EEPROM.read(Joint2LocationAddr);
+  // int joint3Mem = EEPROM.read(Joint3LocationAddr);
+  // int joint4Mem = EEPROM.read(Joint4LocationAddr);
+  // char msg[10];
+  // SerialWrite("EEPROM Values read: ");
+  // SerialWrite(itoa(joint2Mem, msg, 10));
+  // SerialWrite(", ");
+  // SerialWrite(itoa(joint3Mem, msg, 10));
+  // SerialWrite(", ");
+  // SerialWrite(itoa(joint4Mem, msg, 10));
+  // SerialWrite("\n");
+  // if(Validate(joint2Mem, 2)){Joint2Setpoint = joint2Mem;}
+  // else{Joint2Setpoint = 0;}
+  // if(Validate(joint3Mem, 3)){Joint3Setpoint = joint3Mem;}
+  // else{Joint3Setpoint = 0;}
+  // if(Validate(joint4Mem, 4)){Joint4Setpoint = joint4Mem;}
+  // else{Joint4Setpoint = 0;}
   Gripper.write(0);
 
   // --------------------- setup up homing speeds ---------- //

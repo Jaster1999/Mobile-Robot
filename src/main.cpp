@@ -400,11 +400,11 @@ void homeStepper(void){
   SerialWrite(", ");
   SerialWrite(itoa(joint4Mem, msg, 10));
   SerialWrite("\n");
-  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem);}
+  if(Validate(joint2Mem, 2)){joint2.write(joint2Mem); Joint2Setpoint = joint2Mem;}
   else{joint2.write(0);}
-  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem);}
+  if(Validate(joint3Mem, 3)){joint3.write(joint3Mem); Joint3Setpoint = joint3Mem;}
   else{joint3.write(0);}
-  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem);}
+  if(Validate(joint4Mem, 4)){joint4.write(joint4Mem); Joint4Setpoint = joint4Mem;}
   else{joint4.write(0);}
   Gripper.write(0);
 

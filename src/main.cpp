@@ -17,7 +17,7 @@
 #define Gripper_pin 5
 
 #define Z_en        6    
-#define Z_homeSw    9
+#define Z_homeSw    A0
 #define Z_dir       A4    
 #define Z_stp       A5 
 #define StepsPermm  200   
@@ -66,9 +66,9 @@ bool Validate(int angle, int jointNum);
 
 // ----------------- Globals -----------------------------=---//
 #define homeSpeed     550
-#define maxSpeed      1000
-#define homeAccel     300
-#define MaxAccel      500 
+#define maxSpeed      3500
+#define homeAccel     200
+#define MaxAccel      800 
 long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
 char TXBUFF[TXBUFFSIZE];  //TX buffer Char array of size TXBUFFSIZE
@@ -438,9 +438,9 @@ void homeStepper(void){
     stepperZ.moveTo(init_homing);  // Set the position to move to
     init_homing--;  // Decrease by 1 for next move if needed
     stepperZ.run();  // Start moving the stepper
-    // delay(5);
+    delayMicroseconds(100);
   }
-  init_homing = -1;
+  init_homing = 1;
   stepperZ.setCurrentPosition(0); 
   delay(5);
   // Serial.println("Stepper Z is Homed \n");

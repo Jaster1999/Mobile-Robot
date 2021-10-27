@@ -1,4 +1,5 @@
 import cv2
+from cv2 import data
 import numpy as np
 import PySimpleGUI as sg
 import os
@@ -18,15 +19,18 @@ import MR_Navigation as Nav
 
 
 def main():
-    camera = cv2.VideoCapture(3, cv2.CAP_DSHOW)
+    '''camera = cv2.VideoCapture(3, cv2.CAP_DSHOW)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)'''
     sg.theme('default1')
-    ret ,img = camera.read()
+    '''ret ,img = camera.read()
     print(ret)
     img = cv2.flip(img,1)
-    print(img.shape)
+    print(img.shape)'''
 
+    arm = MK.Manipulator()
+    
+    img = np.zeros((1280, 720, 3))
     # These are placeholder images to take the positions of images you wish to display 
     imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
 
@@ -53,8 +57,9 @@ def main():
             [sg.Text("Manipulator Joint Angles and positions:")],
             [sg.Text("Joint1:"), sg.Text(key="joint1", size=(10, 1)), sg.Text("Joint2:"), sg.Text(key="joint2", size=(10, 1)), sg.Text("Joint3:"), sg.Text(key="joint3", size=(10, 1)), sg.Text("Joint4:"), sg.Text(key="joint4", size=(10, 1))],
             [sg.Text("Set Manipulator Position:")],
-            [sg.Text("Set X: ", size=(10, 1)), sg.Input(size=(10, 1), key="setx" ), sg.Text("Set Y: ", size=(10, 1)), sg.Input(size=(10, 1), key="sety"), sg.Text("Set Z: ", size=(10, 1)), sg.Input(size=(10, 1), key="setz" )],
-            [sg.Button("Confirm Coordinates")],
+            [sg.Text("Set X: ", size=(10, 1)), sg.Input(size=(10, 1), key="setx", default_text = "0"), sg.Text("Set Y: ", size=(10, 1)), sg.Input(size=(10, 1), key="sety", default_text = "0"), sg.Text("Set Z: ", size=(10, 1)), sg.Input(size=(10, 1), key="setz", default_text = "0")],
+            [sg.Text("Orientation"), sg.Input(size=(10, 1), key="orientation", default_text = "0")],
+            [sg.Button("Confirm Coordinates"), sg.Button("Gripper")],
             [sg.Button("Stop"), sg.Button("Home")]]
 
 
@@ -93,9 +98,8 @@ def main():
 
     com_port = input("type comport: ")
     goal = []
-    x = 0
-    y = 0
-    z = 0
+    gripperopen = True
+    toggled = False
     navigate = False
     goal_set = False
     lowerRegionBackground = np.array([99, 109, 100],np.uint8)
@@ -120,12 +124,15 @@ def main():
         print("[green]Waiting complete![/]")
         #time.sleep(10)   #wait needed from port to open properly and MCU to be ready
 
+    com_port2 = input("comport 2: ")
+    port2 = serial.Serial(com_port2, baudrate=115200)
+    if (port2.is_open == False):
+        port2.open()
+
+
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
-        event, values = window.read(timeout = 1)
-        window["x"].update(str(x))
-        window["y"].update(str(y))
-        window["z"].update(str(z))
+        event, values = window.read(timeout = 0.1)
         
         if event == sg.WIN_CLOSED:
             time.sleep(10)
@@ -149,12 +156,67 @@ def main():
                 set_point = CV.find_point(img)
                 goal = (int(set_point[1]/20), int(set_point[0]/20))
                 print(goal)
+        elif event == "Stop":
+                print("Manipulator Stopping")
+                port2.write(bytes('#', 'UTF-8'))
+                port2.flush()
+        elif event == "Home":
+                port2.write(bytes('h\n', 'UTF-8'))
+                port2.flush()
+                print("Home Command sent")
+        elif event == "Confirm Coordinates":
+                print("Moving to defined coordinates")
+                x = int(values["setx"])
+                y = int(values["sety"])
+                z = int(values["setz"])
+                window["x"].update(str(x))
+                window["y"].update(str(y))
+                window["z"].update(str(z))
+                Orientation = int(values["orientation"])
+                Orientation = arm.AngleToOrientation(Orientation)
+                Position = (x, y, z)
+                
+                Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
+                Joint2 = arm.AngleValidator(Joint2)
+                Joint3 = arm.AngleValidator(Joint3)
+                Joint4 = arm.AngleValidator(Joint4)
+                #convert invkine (-180º to 180º) angle to a servo angle (0º to 180º)
+                print("Servo 2 Move to: "+str(Joint2)+"º")
+                print("Servo 3 Move to: "+str(Joint3)+"º")
+                print("Servo 4 Move to: "+str(Joint4)+"º")
+                # Need to round to mm as the stepper firmware expects an int mm
+                print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
+
+                port2.write(bytes('2'+str(Joint2)+'\n', 'UTF-8'))
+                time.sleep(0.01)
+                port2.write(bytes('3'+str(Joint3)+'\n', 'UTF-8'))
+                time.sleep(0.01)
+                port2.write(bytes('4'+str(Joint4)+'\n', 'UTF-8'))
+                time.sleep(0.01)
+                port2.write(bytes('Z'+str(round(Joint1))+'\n', 'UTF-8'))
+                port2.flush()
+
+        elif event == "Gripper":
+                gripperopen = not gripperopen
+                toggled = True
+
+        if(gripperopen and toggled):
+                port2.write(bytes('G0\n', 'UTF-8'))
+                port2.flush()
+                print("Opening Gripper")
+                toggled = not toggled
+        elif(not gripperopen and toggled):
+                port2.write(bytes('G90\n', 'UTF-8'))
+                port2.flush()
+                print("Closing Gripper")
+                toggled = not toggled
+
+
+
+                
 
 
         if navigate and goal_set:
-                _,img = camera.read()
-                img = cv2.flip(img,1)
-                img = cv2.imread(values["-IN-"])
 
                 # create dot filter, dot is the blue dot on the robot
                 dot_mask, dot_res = CV.HSV_filter(img, lowerRegionDot, upperRegionDot)
@@ -181,9 +243,6 @@ def main():
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
                 dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
                 #cv2.imshow("Dilation adj obstacle mask", dilated_mask)
-
-                imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
-                window["rgb"].update(data=imgbytesrgb_actual)
 
                 # find the robot's centre and the blue dot and calculate the robots orientation
                 try:

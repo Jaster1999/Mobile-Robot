@@ -60,14 +60,14 @@ AccelStepper stepperZ(AccelStepper::FULL2WIRE, Z_dir, Z_stp);
 //------------------ Function prototypes --------------------- // 
 void handleSerial (void);
 void homeStepper(void); // Home stepper and set Servos to the default value from EEPROM
-void moveStepper(uint32_t steps);
+void moveStepper(long int steps);
 void SerialWrite(const char* array);
-bool Validate(int angle, int jointNum);
+bool Validate(long int angle, int jointNum);
 
 // ----------------- Globals -----------------------------=---//
-#define homeSpeed     550
-#define maxSpeed      3500
-#define homeAccel     200
+#define homeSpeed     1550
+#define maxSpeed      2500
+#define homeAccel     400
 #define MaxAccel      800 
 long int init_homing = -1;
 bool Homed = false;     // -- make a homed variable to ensure unit is homed before opperation
@@ -78,7 +78,7 @@ int rxbuffIndex = 0;  // RX buffer index.  To know where the most recent charact
 double Time = 0;
 double currentTime = 0;
 double previousTime = 0;
-
+volatile long int steps; //Made steps a uint32 to allow it to go over 65535 steps, just in case of microstepping or something
 //------Variables used for speed control of servos.  Volatile as they are to be used in an ISR
 volatile int Joint2Setpoint = 0;
 volatile int Joint3Setpoint = 0;
@@ -266,8 +266,8 @@ void loop() {
 
 void handleSerial(){
   int Angle;
-  int Dist_mm;
-  uint32_t steps; //Made steps a uint32 to allow it to go over 65535 steps, just in case of microstepping or something
+  long int Dist_mm;
+  // long int steps; //Made steps a uint32 to allow it to go over 65535 steps, just in case of microstepping or something
   if (rxbuffIndex>=RXbufSize) {
       rxbuffIndex = 0;
       SerialWrite("BUFFER OVERRUN\n");
@@ -374,10 +374,10 @@ void handleSerial(){
             {
               SerialWrite("Z-Axis moved to:");
               char intstr [10];
-              itoa(steps, intstr, 10);
+              itoa(Dist_mm, intstr, 10);
               SerialWrite(intstr);
               SerialWrite("\n");
-              steps = abs(Dist_mm*StepsPermm); //Now steps is actually steps
+              steps = Dist_mm*200; //StepsPermm; //Now steps is actually steps
               moveStepper(steps);
             }
             else{SerialWrite("Invalid Distance Received\n");}
@@ -438,17 +438,18 @@ void homeStepper(void){
     stepperZ.moveTo(init_homing);  // Set the position to move to
     init_homing--;  // Decrease by 1 for next move if needed
     stepperZ.run();  // Start moving the stepper
-    delayMicroseconds(100);
+    delayMicroseconds(150);
   }
   init_homing = 1;
   stepperZ.setCurrentPosition(0); 
   delay(5);
   // Serial.println("Stepper Z is Homed \n");
   SerialWrite("Stepper Z is Homed \n");
-
+  stepperZ.setMaxSpeed(maxSpeed);
+  stepperZ.setAcceleration(MaxAccel);
 }
 
-void moveStepper(uint32_t steps){
+void moveStepper(long int steps){
   stepperZ.moveTo(steps);
   // delay(5);
   while((stepperZ.distanceToGo() != 0) && (SafeToRun == true)){
@@ -472,7 +473,7 @@ void SerialWrite(const char* array) //to write with the Interrupt driven, I crea
   delay(5);
 }
 
-bool Validate(int Value, int jointNum)
+bool Validate(long int Value, int jointNum)
 {
   switch (jointNum)
   {

@@ -280,7 +280,7 @@ void setup()
   // timer clock is default set to 80 MHz
   timer = timerBegin(0, 80, true);  // 80 is the prescaler so timer is running at 1MHz 
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 250000, true); // (timer, microseconds)80MHz/80/1000000 == 1s
+  timerAlarmWrite(timer, 50000, true); // (timer, microseconds)80MHz/80/1000000 == 1s
   timerAlarmEnable(timer);
 }
  

@@ -69,5 +69,3 @@ def find_point(img):
     cv2.waitKey()
     point = clicks[-1]
     return point
-
-

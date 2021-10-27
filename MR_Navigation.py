@@ -51,7 +51,9 @@ def astar(array, start, goal):
 def getpos(mask):
     contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     # calculate moments for each contour
-    c = contours[0]
+    areas = [cv2.contourArea(c) for c in contours]
+    max_index = np.argmax(areas)
+    c = contours[max_index]
     M = cv2.moments(c)
     # calculate x,y coordinate of center
     cX = int(M["m10"] / M["m00"])
@@ -78,21 +80,21 @@ def getangle(pos1, pos2):
 def generate_command(path, angle, current_pos):
     msg = ' '
     try:
-        if(len(path) == 1):
+        if(len(path) == 0):
             return msg
         else:
             if angle>10 and angle <= 180:
                 msg = "9"
             elif angle<350 and angle > 180:
                 msg = "7"
-            elif path[0][0] - current_pos[0] >= 1:
-                msg = "D"
-            elif path[0][0] - current_pos[0] <= -1:
-                msg = "A"
-            elif path[0][1] - current_pos[1] >= 1:
-                msg = "S"
-            elif path[0][1] - current_pos[1] <= -1:
+            elif path[0][0] - current_pos[0] >= 1: # was right now forward
                 msg = "W"
+            elif path[0][0] - current_pos[0] <= -1: # was left now back
+                msg = "S"
+            elif path[0][1] - current_pos[1] >= 1: # was back now right
+                msg = "D"
+            elif path[0][1] - current_pos[1] <= -1: # was forward now left
+                msg = "A"
             else:
                 msg = "0"
     except:

@@ -290,7 +290,7 @@ void handleSerial(){
     }
     
     else if ((Homed == true)){
-      RXbuff[rxbuffIndex-1]='\0'; //add a null character to the end of the char array
+      RXbuff[rxbuffIndex]='\0'; //add a null character to the end of the char array
       switch (RXbuff[0]) {
         case '2':
           // servo 1 on joint 2

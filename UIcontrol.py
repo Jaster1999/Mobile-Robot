@@ -18,6 +18,20 @@ import MR_Navigation as Nav
 
 
 
+def convert_image_thread():
+        global imgbytes
+        global run_thread1
+        global img
+        while run_thread1:
+                imgbytes = cv2.imencode(".png", img)[1].tobytes()
+        return
+
+
+img = np.zeros((1280, 720, 3))
+imgbytes = cv2.imencode(".png", img)[1].tobytes()
+run_thread1 = True
+imgthread = threading.Thread(target=convert_image_thread)
+
 def main():
     '''camera = cv2.VideoCapture(3, cv2.CAP_DSHOW)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -29,14 +43,21 @@ def main():
     print(img.shape)'''
 
     arm = MK.Manipulator()
+    arm.setDH_parameters(125,360,120,170,80,-67,-67,0)
     
-    img = np.zeros((1280, 720, 3))
+    '''img = np.zeros((1280, 720, 3))
     # These are placeholder images to take the positions of images you wish to display 
-    imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
+    imgbytes = cv2.imencode(".png", img)[1].tobytes()
+    run_thread1 = True
+    imgthread = threading.Thread(target=convert_image_thread)'''
+    global run_thread1 
+    global imgbytes
+    global img
+    imgthread.start()
 
     #load images into elements
-    image_elem1 = sg.Image(key="rgb", data=imgbytesrgb_actual)
-    image_elem2 = sg.Image(key="mask", data=imgbytesrgb_actual)
+    image_elem1 = sg.Image(key="rgb", data=imgbytes)
+    image_elem2 = sg.Image(key="mask", data=imgbytes)
     
 
 
@@ -177,6 +198,8 @@ def main():
                 Position = (x, y, z)
                 
                 Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
+                print(Joint1)
+                Joint1 = arm.DistanceValidator(Joint1)
                 Joint2 = arm.AngleValidator(Joint2)
                 Joint3 = arm.AngleValidator(Joint3)
                 Joint4 = arm.AngleValidator(Joint4)
@@ -206,7 +229,7 @@ def main():
                 print("Opening Gripper")
                 toggled = not toggled
         elif(not gripperopen and toggled):
-                port2.write(bytes('G90\n', 'UTF-8'))
+                port2.write(bytes('G180\n', 'UTF-8'))
                 port2.flush()
                 print("Closing Gripper")
                 toggled = not toggled
@@ -217,7 +240,6 @@ def main():
 
 
         if navigate and goal_set:
-
                 # create dot filter, dot is the blue dot on the robot
                 dot_mask, dot_res = CV.HSV_filter(img, lowerRegionDot, upperRegionDot)
                 dot_res=[]
@@ -294,10 +316,12 @@ def main():
                         time.sleep(1)
                 else:
                         print("[red]oop[/][yellow], couldnt open port[/]\n")    
-            
+
+                window["rgb"].update(data=imgbytes)
 
         
-
+    run_thread1 = False
+    time.sleep(0.5)
     window.close()
     port.close()
     

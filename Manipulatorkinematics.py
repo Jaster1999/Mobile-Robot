@@ -1,5 +1,7 @@
 import math
 
+from numpy.lib.twodim_base import diag
+
 class Manipulator:
     def __init__(self):
         self.a1 = 0
@@ -78,7 +80,15 @@ class Manipulator:
         #current angle can be ±180º, need to convert to 0-180 for servo with 0º being 90º on the servo
         angle = angle/2
         angle += 90
+        angle = round(angle)
         return angle
+
+    def DistanceValidator(self, Distance):
+        #Do some inversion cos stepper homes to top
+        # and down is positive for the stepper
+        Distance = 400-Distance
+        Distance = round(Distance)
+        return Distance
 
     def AngleToOrientation(self, angle):
         angle = math.radians(angle)

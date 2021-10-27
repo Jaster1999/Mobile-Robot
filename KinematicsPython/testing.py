@@ -21,3 +21,5 @@ print("Servo 4 Move to: "+str(arm.AngleValidator(Joint4))+"º")
 
 # Need to round to mm as the stepper firmware expects an int mm
 print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
+
+print(arm.AngleToOrientation(360))

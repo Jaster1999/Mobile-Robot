@@ -79,3 +79,13 @@ class Manipulator:
         angle = angle/2
         angle += 90
         return angle
+
+    def AngleToOrientation(self, angle):
+        angle = math.radians(angle)
+        C_angle = round(math.cos(angle), 5)
+        S_angle = round(math.sin(angle), 5)
+        I = [C_angle, S_angle, 0]
+        J = [-S_angle, C_angle, 0]
+        K = [0,0,1.0]
+        Orientation = [I,J,K]
+        return Orientation

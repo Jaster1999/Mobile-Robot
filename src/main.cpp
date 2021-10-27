@@ -418,24 +418,10 @@ void handleSerial(){
 }
 // Home stepper and set Servos to the default value from EEPROM
 void homeStepper(void){ 
-  // ----------------- set servos to go to initial angle from angles stored in memory
-  // int joint2Mem = EEPROM.read(Joint2LocationAddr);
-  // int joint3Mem = EEPROM.read(Joint3LocationAddr);
-  // int joint4Mem = EEPROM.read(Joint4LocationAddr);
-  // char msg[10];
-  // SerialWrite("EEPROM Values read: ");
-  // SerialWrite(itoa(joint2Mem, msg, 10));
-  // SerialWrite(", ");
-  // SerialWrite(itoa(joint3Mem, msg, 10));
-  // SerialWrite(", ");
-  // SerialWrite(itoa(joint4Mem, msg, 10));
-  // SerialWrite("\n");
-  // if(Validate(joint2Mem, 2)){Joint2Setpoint = joint2Mem;}
-  // else{Joint2Setpoint = 0;}
-  // if(Validate(joint3Mem, 3)){Joint3Setpoint = joint3Mem;}
-  // else{Joint3Setpoint = 0;}
-  // if(Validate(joint4Mem, 4)){Joint4Setpoint = joint4Mem;}
-  // else{Joint4Setpoint = 0;}
+  // ----------------- set servos to go to initial angle from angles
+  Joint2Setpoint = 90;
+  Joint3Setpoint = 90;
+  Joint4Setpoint = 90;
   Gripper.write(0);
 
   // --------------------- setup up homing speeds ---------- //

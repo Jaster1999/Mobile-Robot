@@ -20,7 +20,7 @@
 #define Z_homeSw    A0
 #define Z_dir       A4    
 #define Z_stp       A5 
-#define StepsPermm  200   
+#define StepsPermm  625   
 
 // #define BUF_LEN     20
 
@@ -39,7 +39,7 @@
 #define Joint4LocationAddr 2
 
 //---------Joint Angle/distance Limits--------------
-#define StepperMax  300 //mm
+#define StepperMax  250 //mm
 #define StepperMin  0
 #define Joint2Max   180
 #define Joint2Min   0
@@ -368,16 +368,28 @@ void handleSerial(){
         case 'Z':
           // Z stepper call
           if (rxbuffIndex>1){
-            Dist_mm = atoi(&RXbuff[1]);
+
+            Dist_mm = atol(&RXbuff[1]);
+            //------------------------------------------------------------------------
+            steps = Dist_mm*StepsPermm;
+            SerialWrite("Debugging the steps:");
+            char intstr45[10];
+            ltoa(steps, intstr45, 10);
+            SerialWrite(intstr45);
+            SerialWrite("\n");
+            //------------------------------------------------------------------------
             //Note at this point steps is actually the distance in mm
-            if(Validate(steps, 1))
+            if(Validate(Dist_mm, 1))
             {
               SerialWrite("Z-Axis moved to:");
               char intstr [10];
-              itoa(Dist_mm, intstr, 10);
+              ltoa(Dist_mm, intstr, 10);
               SerialWrite(intstr);
               SerialWrite("\n");
-              steps = Dist_mm*200; //StepsPermm; //Now steps is actually steps
+              // steps = Dist_mm*200; //StepsPermm; //Now steps is actually steps
+              
+              
+
               moveStepper(steps);
             }
             else{SerialWrite("Invalid Distance Received\n");}
@@ -438,7 +450,7 @@ void homeStepper(void){
     stepperZ.moveTo(init_homing);  // Set the position to move to
     init_homing--;  // Decrease by 1 for next move if needed
     stepperZ.run();  // Start moving the stepper
-    delayMicroseconds(150);
+    delayMicroseconds(50);
   }
   init_homing = 1;
   stepperZ.setCurrentPosition(0); 
@@ -458,7 +470,7 @@ void moveStepper(long int steps){
   }
   SerialWrite("Z stopped at: ");
   char intstr [10];
-  itoa(stepperZ.currentPosition(), intstr, 10);
+  ltoa(stepperZ.currentPosition(), intstr, 10);
   SerialWrite(intstr);
   SerialWrite("\n");
   // Serial.print("Z stopped at: "); Serial.println(stepperZ.currentPosition());

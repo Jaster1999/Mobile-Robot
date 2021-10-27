@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import os
 import matplotlib.pyplot as plt
 import math
-import imutils
+# import imutils
 import time
 import csv
 import serial
@@ -147,6 +147,8 @@ def main():
 
     com_port2 = input("comport 2: ")
     port2 = serial.Serial(com_port2, baudrate=115200)
+    port2.timeout = 0.5
+    port2.inter_byte_timeout = 0.1
     if (port2.is_open == False):
         port2.open()
 
@@ -211,26 +213,35 @@ def main():
                 print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
 
                 port2.write(bytes('2'+str(Joint2)+'\n', 'UTF-8'))
-                time.sleep(0.01)
+                
+                time.sleep(0.2)
+                print('2'+str(Joint2)+'\n')
                 port2.write(bytes('3'+str(Joint3)+'\n', 'UTF-8'))
-                time.sleep(0.01)
+                time.sleep(0.2)
+                print('3'+str(Joint3)+'\n')
                 port2.write(bytes('4'+str(Joint4)+'\n', 'UTF-8'))
-                time.sleep(0.01)
+                print('4'+str(Joint4)+'\n')
+                time.sleep(0.2)
                 port2.write(bytes('Z'+str(round(Joint1))+'\n', 'UTF-8'))
                 port2.flush()
+                time.sleep(0.01)
+                msg = port2.read(1000)
+                print(msg)
 
         elif event == "Gripper":
                 gripperopen = not gripperopen
                 toggled = True
 
         if(gripperopen and toggled):
-                port2.write(bytes('G0\n', 'UTF-8'))
+                port2.write(bytes('G0\n\r', 'UTF-8'))
                 port2.flush()
+                time.sleep(0.01)
                 print("Opening Gripper")
                 toggled = not toggled
         elif(not gripperopen and toggled):
-                port2.write(bytes('G180\n', 'UTF-8'))
+                port2.write(bytes('G180\n\r', 'UTF-8'))
                 port2.flush()
+                time.sleep(0.01)
                 print("Closing Gripper")
                 toggled = not toggled
 

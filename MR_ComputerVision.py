@@ -67,7 +67,10 @@ def find_point(img):
     cv2.setMouseCallback('Camera View', on_mouse, 0, )
     cv2.imshow('Camera View', img)
     cv2.waitKey()
-    point = clicks[-1]
+    try:
+        point = clicks[0]
+    except:
+        point = (20, 20)
     return point
 
 

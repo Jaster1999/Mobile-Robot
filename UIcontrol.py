@@ -16,19 +16,21 @@ import MR_ComputerVision as CV
 import MR_Navigation as Nav
 
 
-
 def main():
-    camera = cv2.VideoCapture(3, cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     sg.theme('default1')
     ret ,img = camera.read()
+    '''cv2.namedWindow('Camera View')
+    cv2.imshow('Camera View', img)
+    cv2.waitKey()'''
     print(ret)
     img = cv2.flip(img,1)
     print(img.shape)
 
-    # These are placeholder images to take the positions of images you wish to display 
-    imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
+    scaled = cv2.resize(img, (1280, 720), interpolation=cv2.INTER_AREA)
+    imgbytesrgb_actual = cv2.imencode(".png", scaled)[1].tobytes()
 
     #load images into elements
     image_elem1 = sg.Image(key="rgb", data=imgbytesrgb_actual)
@@ -39,7 +41,7 @@ def main():
     # 1st attributes list
     # Handles image processing settings
     col_11 =[
-            [sg.Text("Test image: ", size=(10, 1)), sg.Input(size=(40, 1)), sg.FileBrowse(key="-IN-"), sg.Button("Calculate")],
+            [sg.Button("Stop"), sg.Button("Start")],
             [sg.Button(button_text="Calibrate Obstacle Filter"), sg.Text(key="obsfiltervalues", size=(20, 1))],
             [sg.Button(button_text="Calibrate Robot Filter"), sg.Text(key="robotfiltervalues", size=(20, 1))],
             [sg.Button(button_text="Calibrate Dot Filter"), sg.Text(key="dotfiltervalues", size=(20, 1))],
@@ -98,12 +100,12 @@ def main():
     z = 0
     navigate = False
     goal_set = False
-    lowerRegionBackground = np.array([99, 109, 100],np.uint8)
-    upperRegionBackground = np.array([109, 255, 184],np.uint8)
+    lowerRegionBackground = np.array([0, 43, 24],np.uint8)
+    upperRegionBackground = np.array([24, 151, 255],np.uint8)
     lowerRegionRobot = np.array([0, 142, 131],np.uint8)
     upperRegionRobot = np.array([32, 255, 225],np.uint8)
-    lowerRegionDot = np.array([0, 0, 69],np.uint8)
-    upperRegionDot = np.array([177, 42, 255],np.uint8)
+    lowerRegionDot = np.array([66, 151, 108],np.uint8)
+    upperRegionDot = np.array([151, 255, 215],np.uint8)
 
     port = serial.Serial(com_port, baudrate=115200)
     if (port.is_open == False):
@@ -130,7 +132,8 @@ def main():
         if event == sg.WIN_CLOSED:
             time.sleep(10)
             break
-        if event == "Calculate":
+        if event == "Start":
+            print("processing")
             navigate = True
         if event =="Calibrate Obstacle Filter":
                 filter_values = CV.calibrate(camera)
@@ -140,74 +143,82 @@ def main():
                 filter_values = CV.calibrate(camera)
                 window["robotfiltervalues"].update(str(filter_values))
                 lowerRegionBackground = np.array([filter_values[0], filter_values[2], filter_values[5]],np.uint8)
-        if event =="Calibrate Dor Filter":
+        if event =="Calibrate Dot Filter":
                 filter_values = CV.calibrate(camera)
                 window["dotfiltervalues"].update(str(filter_values))
                 lowerRegionBackground = np.array([filter_values[0], filter_values[2], filter_values[5]],np.uint8)
         if event == "Set Goal":
                 point = []
                 set_point = CV.find_point(img)
-                goal = (int(set_point[1]/20), int(set_point[0]/20))
+                goal = (int(set_point[1]/10), int(set_point[0]/10))
                 print(goal)
+                goal_set = True
 
 
         if navigate and goal_set:
+                print("running")
                 _,img = camera.read()
                 img = cv2.flip(img,1)
-                img = cv2.imread(values["-IN-"])
 
                 # create dot filter, dot is the blue dot on the robot
                 dot_mask, dot_res = CV.HSV_filter(img, lowerRegionDot, upperRegionDot)
                 dot_res=[]
                 inv_dot_mask = cv2.bitwise_not(dot_mask)
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+                inv_dot_mask = cv2.morphologyEx(inv_dot_mask, cv2.MORPH_CLOSE, kernel)
+                '''plt.imshow(dot_mask)
+                plt.figure()
+                plt.imshow(inv_dot_mask)
+                plt.show()'''
                 #cv2.imshow("Dilation adj dot_mask", inv_dot_mask)
 
                 # create robot filter
                 robot_mask, robot_res = CV.HSV_filter(img, lowerRegionRobot, upperRegionRobot)
                 robot_res=[]
                 inv_rob_mask = cv2.bitwise_not(robot_mask) 
-                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
                 dot_plus_robot_mask = cv2.dilate(cv2.add(inv_rob_mask, inv_dot_mask), kernel, iterations=5)
                 kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
                 eroded_rob_mask = cv2.erode(inv_rob_mask, (7, 7), iterations=3)
-                dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel2, iterations=1)
+                dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel2, iterations=2)
                 #cv2.imshow("Dilation adj rob_mask", dilated_rob_mask)
 
                 # create Background filter
                 mask, res = CV.HSV_filter(img, lowerRegionBackground, upperRegionBackground)
-                combined_mask = cv2.subtract(mask, dot_plus_robot_mask) 
+                inv_mask = cv2.bitwise_not(mask)
+                combined_mask = cv2.subtract(inv_mask, dot_plus_robot_mask) 
+                #cv2.imshow("mask", mask)
                 #inv_mask = cv2.bitwise_not(combined_mask)
-                eroded_mask = cv2.erode(combined_mask, (7, 7), iterations=3)
+                eroded_mask = cv2.erode(combined_mask, (7, 7), iterations=2)
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
                 dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
                 #cv2.imshow("Dilation adj obstacle mask", dilated_mask)
-
-                imgbytesrgb_actual = cv2.imencode(".png", img)[1].tobytes()
-                window["rgb"].update(data=imgbytesrgb_actual)
+                #cv2.waitKey()
 
                 # find the robot's centre and the blue dot and calculate the robots orientation
-                try:
-                        robot_centre = Nav.getpos(dilated_rob_mask)
-                        cv2.circle(img, robot_centre, 2, (255, 255, 255), -1)
-                        cv2.putText(img, "centroid", (robot_centre[0] + 25, robot_centre[1] + 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                        dot_centre = Nav.getpos(inv_dot_mask) 
-                        cv2.circle(img, dot_centre, 2, (0, 255, 255), -1)
-                        cv2.putText(img, "dot centroid", (dot_centre[0] - 25, dot_centre[1] - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                        current_angle = Nav.getangle(robot_centre, dot_centre) # finding the robots angle relative to the camera frame coordinates.
-                        #print(dot_centre, robot_centre)
-                except:
+                #try:
+                robot_centre = Nav.getpos(dilated_rob_mask)
+                cv2.circle(img, robot_centre, 2, (255, 255, 255), -1)
+                cv2.putText(img, "centroid", (robot_centre[0] + 25, robot_centre[1] + 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+                dot_centre = Nav.getpos(inv_dot_mask) 
+                cv2.circle(img, dot_centre, 2, (0, 255, 255), -1)
+                cv2.putText(img, "dot centroid", (dot_centre[0] - 25, dot_centre[1] - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                current_angle = Nav.getangle(robot_centre, dot_centre) # finding the robots angle relative to the camera frame coordinates.
+                #print(dot_centre, robot_centre)
+                '''except:
                         print("Robot lost")
-                        current_angle = 0
+                        current_angle = 0'''
                 
                 # produce a grid for the astar pathfinder
-                resized_mask = cv2.resize(dilated_mask, None, fx=0.05, fy=0.05, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
+                resized_mask = cv2.resize(dilated_mask, None, fx=0.1, fy=0.1, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
                 resized_mask[resized_mask!=0]=1 # turning grid into 1's and 0's
 
                  # transforming robot coords into grid coord system.
-                scaled_robotcoords = (int(robot_centre[1]/20), int(robot_centre[0]/20))
+                scaled_robotcoords = (int(robot_centre[1]/10), int(robot_centre[0]/10))
                 #print(scaled_robotcoords)
                 # finding the route, remember to set a real end goal
                 route = Nav.astar(resized_mask, scaled_robotcoords, goal)
+                print(route)
                 try:
                         route = route[::-1]
                 except:
@@ -234,7 +245,17 @@ def main():
                         print(cmd)
                         time.sleep(1)
                 else:
-                        print("[red]oop[/][yellow], couldnt open port[/]\n")    
+                        print("[red]oop[/][yellow], couldnt open port[/]\n") 
+                
+                # update UI display
+                scaled = cv2.resize(img, (1280, 720), interpolation=cv2.INTER_AREA)
+                imgbytesrgb_actual = cv2.imencode(".png", scaled)[1].tobytes()
+                window["rgb"].update(data=imgbytesrgb_actual) 
+
+                '''scaled = cv2.resize(dilated_mask, (1280, 720), interpolation=cv2.INTER_AREA)
+                imgbytesmask_actual = cv2.imencode(".png", scaled)[1].tobytes()
+                window["mask"].update(data=imgbytesmask_actual) '''
+
             
 
         

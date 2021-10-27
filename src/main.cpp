@@ -274,7 +274,7 @@ void handleSerial(){
       // Serial.print("BUFFER OVERRUN\n"); 
     }
   
-  if (rxbuffIndex > 0 && RXbuff[rxbuffIndex-1]=='\n'){  //if there is something in the buffer an the last character is a newline
+  if (rxbuffIndex > 0 && (RXbuff[rxbuffIndex-1]=='\n' || RXbuff[rxbuffIndex-1] == '\r')){  //if there is something in the buffer an the last character is a newline or carrige return
     // digitalWrite(LED_BUILTIN, HIGH);
     // delay(100);
     ServosRun = true;

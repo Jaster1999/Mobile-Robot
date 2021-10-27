@@ -80,6 +80,12 @@ class Manipulator:
         angle += 90
         return angle
 
+    def DistanceValidator(self, Distance):
+        #Do some inversion cos stepper homes to top
+        # and down is positive for the stepper
+        Distance = 400-Distance
+        return Distance
+
     def AngleToOrientation(self, angle):
         angle = math.radians(angle)
         C_angle = round(math.cos(angle), 5)

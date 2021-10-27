@@ -4,15 +4,10 @@ import math
 import heapq
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-import serial
-import time
-from rich import print
-from rich.progress import Progress
-com_port = 'COM7'
 
 """ 0, 177 for H
 0, 31 for S
-68, 254 for V""" # these values are depreciated
+68, 254 for V"""
 
 
 def HSV_filter(img, lower, upper):
@@ -66,12 +61,11 @@ def calibrate(camera): # function to calibrate various filters, you just get the
             break
     return (hL, hH, sL, sH, vL, vH)
 
+
 def getpos(mask):
     contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     # calculate moments for each contour
-    areas = [cv2.contourArea(c) for c in contours]
-    max_index = np.argmax(areas)
-    c = contours[max_index]
+    c = contours[0]
     M = cv2.moments(c)
     # calculate x,y coordinate of center
     cX = int(M["m10"] / M["m00"])
@@ -85,7 +79,7 @@ def getangle(pos1, pos2):
         angle_rad = -math.atan2(-xdif, ydif)
     elif(xdif == 0 and ydif > 0):
         angle_rad = 0
-    elif(xdif == 0 and ydif<0):
+    elif(xidf == 0 and ydif<0):
         angle_rad = math.pi
     elif(ydif == 0 and xdif > 0):
         angle_rad = math.pi/2
@@ -94,6 +88,7 @@ def getangle(pos1, pos2):
     #if(angle_rad<0):
      #   angle_rad += 2*math.pi
     return math.degrees(angle_rad)
+
 
 # heuristic function for path scoring
 def heuristic(a, b):
@@ -140,29 +135,6 @@ def astar(array, start, goal):
                 heapq.heappush(oheap, (fscore[neighbor], neighbor))
     return False
 
-def generate_command(path, angle, current_pos):
-    msg = ' '
-    try:
-        if(len(path) == 0):
-            return msg
-        else:
-            if angle>10 and angle <= 180:
-                msg = "9"
-            elif angle<350 and angle > 180:
-                msg = "7"
-            elif path[0][0] - current_pos[0] >= 1: # was right now forward
-                msg = "W"
-            elif path[0][0] - current_pos[0] <= -1: # was left now back
-                msg = "S"
-            elif path[0][1] - current_pos[1] >= 1: # was back now right
-                msg = "D"
-            elif path[0][1] - current_pos[1] <= -1: # was forward now left
-                msg = "A"
-            else:
-                msg = "0"
-    except:
-        msg = ' '
-    return msg
 
 def main():
     camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
@@ -177,63 +149,46 @@ def main():
         print("Robot filter", calibrate(camera))
 
     # end goal coords
-    goal = (21, 39)
-    #goal = ()
-    
-    port = serial.Serial(com_port, baudrate=115200)
-    if (port.is_open == False):
-        port.open()
-        print("[green]port open [/]")
-    if port.is_open:
-        print(port.is_open)
-        print("[green]port open[/]\n")
-        with Progress() as progress:
-            task1 = progress.add_task("[red]Waiting for MCU...[/]", total = 10)
-            while not progress.finished:
-                time.sleep(1)
-                progress.update(task1, advance=1)
-        print("[green]Waiting complete![/]")
-        #time.sleep(10)   #wait needed from port to open properly and MCU to be ready
+    goal = (63,63)
 
-
+    lowerRegionBackground = np.array([0, 43, 24],np.uint8)
+    upperRegionBackground = np.array([24, 151, 255],np.uint8)
+    lowerRegionRobot = np.array([0, 142, 131],np.uint8)
+    upperRegionRobot = np.array([32, 255, 225],np.uint8)
+    lowerRegionDot = np.array([66, 151, 108],np.uint8)
+    upperRegionDot = np.array([151, 255, 215],np.uint8)
     while(1):
         _,img = camera.read()
         img = cv2.flip(img,1)
 
         # create dot filter, dot is the blue dot on the robot
-        lowerRegionBackground = np.array([99, 109, 100],np.uint8)
-        upperRegionBackground = np.array([109, 255, 184],np.uint8)
-        dot_mask, dot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
-        kernel4 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        dot_close = cv2.morphologyEx(dot_mask, cv2.cv2.MORPH_CLOSE, kernel4, iterations=2)
+        dot_mask, dot_res = HSV_filter(img, lowerRegionDot, upperRegionDot)
         dot_res=[]
-        inv_dot_mask = cv2.bitwise_not(dot_close) 
-        cv2.imshow("Dilation adj dot_mask", cv2.dilate(inv_dot_mask, kernel4, iterations=5))
+        inv_dot_mask = cv2.bitwise_not(dot_mask) 
+        cv2.imshow("Dilation adj dot_mask", inv_dot_mask)
 
         # create robot filter
-        lowerRegionBackground = np.array([0, 142, 131],np.uint8)
-        upperRegionBackground = np.array([32, 255, 225],np.uint8)
-        robot_mask, robot_res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
+        robot_mask, robot_res = HSV_filter(img, lowerRegionRobot, upperRegionRobot)
         robot_res=[]
         inv_rob_mask = cv2.bitwise_not(robot_mask) 
-        inv_robot_mask = cv2.morphologyEx(inv_rob_mask, cv2.MORPH_CLOSE, kernel4, iterations=3)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        dot_plus_robot_mask = cv2.dilate(cv2.add(inv_robot_mask, cv2.dilate(inv_dot_mask, kernel, iterations=5)), kernel, iterations=5)
+        dot_plus_robot_mask = cv2.dilate(cv2.add(inv_rob_mask, inv_dot_mask), kernel, iterations=1)
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))
-        eroded_rob_mask = cv2.erode(inv_rob_mask, (7, 7), iterations=0)
+        eroded_rob_mask = cv2.erode(inv_rob_mask, (7, 7), iterations=3)
         dilated_rob_mask = cv2.dilate(eroded_rob_mask, kernel2, iterations=1)
         cv2.imshow("Dilation adj rob_mask", dilated_rob_mask)
 
         # create Background filter
-        lowerRegionBackground = np.array([0, 0, 69],np.uint8)
-        upperRegionBackground = np.array([177, 42, 255],np.uint8)
         mask, res = HSV_filter(img, lowerRegionBackground, upperRegionBackground)
-        combined_mask = cv2.subtract(mask, dot_plus_robot_mask) 
+        inv_mask = cv2.bitwise_not(mask)
+        combined_mask = cv2.subtract(inv_mask, dot_plus_robot_mask) 
         #inv_mask = cv2.bitwise_not(combined_mask)
         eroded_mask = cv2.erode(combined_mask, (7, 7), iterations=3)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
-        dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=4)
+        dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=5)
         cv2.imshow("Dilation adj mask", dilated_mask)
+
+
+
 
 
         # find the robot's centre and the blue dot and calculate the robots orientation
@@ -247,12 +202,15 @@ def main():
             current_angle = getangle(robot_centre, dot_centre) # finding the robots angle relative to the camera frame coordinates.
             #print(dot_centre, robot_centre)
         except:
-            print("Robot lost")
+            #print("Robot lost")
             current_angle = 0
-        #print(current_angle)
+        cv2.imshow("dots", img)
+        print(current_angle)
 
         # produce a grid for the astar pathfinder
         resized_mask = cv2.resize(dilated_mask, None, fx=0.025, fy=0.025, interpolation = cv2.INTER_CUBIC) # scaled to one tenth the original image size
+        #scaled_robotcoords = (int(robot_centre[0]/20), int(robot_centre[1]/20)) # transforming robot coords into grid coord system.
+        print(resized_mask.shape)
         resized_mask[resized_mask!=0]=1 # turning grid into 1's and 0's
         #print(resized_mask)
         for line in resized_mask:
@@ -261,70 +219,15 @@ def main():
             for char in line.split():
                 new_line = new_line+char+", "
             print(new_line)
-        print(resized_mask.shape)
-        print(goal)
+        #print(resized_mask.shape)
 
-
-        # transforming robot coords into grid coord system.
-        scaled_robotcoords = (int(robot_centre[1]/40), int(robot_centre[0]/40))
-        print(scaled_robotcoords)
-        #print(scaled_robotcoords)
         # finding the route, remember to set a real end goal
-        route = astar(resized_mask, scaled_robotcoords, goal)
-        try:
-            route = route[::-1]
-        except:
-            route = scaled_robotcoords
-            print("No route found")
-        # print(route)
-        try:
-            for coord in route:
-                #print(coord)
-                cv2.circle(img, (coord[1]*40, coord[0]*40), 3, (255, 0, 0), -1)
-        except:
-            pass
-        cv2.circle(img, (goal[1]*40, goal[0]*40), 3, (255, 0, 0), -1)
-        cv2.imshow("dots", img)
-
-        path = route
-        angle = current_angle
-        current_pos = scaled_robotcoords
-        #print(current_pos)
-
-        if port.is_open:
-            cmd = generate_command(path, angle, current_pos)
-            port.write(bytes(cmd, 'UTF-8'))
-            port.write(b'\n') #add a carriage return character
-            print(cmd)
-            time.sleep(0.14)
-            # length_of_path = len(path)
-            # for i in range(length_of_path):
-            #     cmd = generate_command(path, angle)
-            #     print(cmd)
-            #     port.write(bytes(cmd, 'UTF-8'))
-            #     port.write(b'\n') #add a carriage return character
-            #     if cmd[0] in ["A", "S", "D", "W"]:
-            #         path.pop(0)
-            #         angle += 5
-            #     elif cmd[0] == '9':
-            #         angle += 15
-            #     elif cmd[0] == '7':
-            #         angle -= 15
-            #     # time.sleep(1)
-            
-        else:
-            print("[red]oop[/][yellow], couldnt open port[/]\n")    
-
-        
-        
+        #route = astar(resized_mask, scaled_robotcoords, goal)
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             camera.release()
             cv2.destroyAllWindows()
             break
-    port.close()
-    print("port closed")
-    return 0
 
 if __name__ == "__main__":
     main()

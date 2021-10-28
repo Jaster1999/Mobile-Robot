@@ -50,6 +50,7 @@ class Manipulator:
         return Position, Orientation
     
     def InvKine(self, Position, Orientation):
+        zerooffset = 0.0001
         Joint1 = Joint2 = Joint3 = Joint4 = 0
         X = Position[0]
         Y = Position[1]
@@ -61,15 +62,15 @@ class Manipulator:
         Xc = X - I[0]*self.a4
         Joint1 = float(Z - self.l2 - self.l3 - self.l4 - self.l1)
         D = (-self.a2**2 -self.a3**2 + (Xc-self.a1)**2 + Yc**2)/(2*self.a2*self.a3)
-        Joint3 = math.atan((math.sqrt(1-D**2))/(D))
-        Joint2 = math.atan((Yc)/(Xc-self.a1)) - math.atan((self.a3*math.sin(Joint3))/(self.a2 + self.a3*math.cos(Joint3)))
+        Joint3 = math.atan((math.sqrt(1-D**2))/(D+zerooffset))
+        Joint2 = math.atan((Yc)/(Xc-self.a1 +zerooffset)) - math.atan((self.a3*math.sin(Joint3))/(zerooffset+self.a2 + self.a3*math.cos(Joint3)))
         s2 = math.sin(Joint2)
         s3 = math.sin(Joint3)
         c2 = math.cos(Joint2)
         c3 = math.cos(Joint3)
         #Orientation of frame 3
         O3 = [[c2*c3 - s2*s3, c2*s3 + c3*s2, 0],[- c2*s3 - c3*s2, c2*c3 - s2*s3, 0],[0,0,1]]
-        Joint4 = math.atan((I[1])/(I[0])) - math.atan((O3[0][1])/(O3[0][0]))
+        Joint4 = math.atan((I[1])/(I[0]+zerooffset)) - math.atan((O3[0][1])/(O3[0][0]+zerooffset))
         #convert radians to degrees
         Joint2 = math.degrees(Joint2)
         Joint3 = math.degrees(Joint3)
@@ -80,6 +81,7 @@ class Manipulator:
         #current angle can be ±180º, need to convert to 0-180 for servo with 0º being 90º on the servo
         angle = angle/2
         angle += 90
+        angle = 180-angle
         angle = round(angle)
         return angle
 

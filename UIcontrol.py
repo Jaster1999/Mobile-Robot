@@ -12,6 +12,7 @@ import serial
 import threading
 from rich import print
 from rich.progress import Progress
+from serial.serialwin32 import Serial
 import Manipulatorkinematics as MK
 import MR_ComputerVision as CV
 import MR_Navigation as Nav
@@ -26,6 +27,12 @@ def convert_image_thread():
                 imgbytes = cv2.imencode(".png", img)[1].tobytes()
         return
 
+def SendSerial(port:Serial, string):
+        for char in string:
+                port.write(bytes(char, 'UTF-8'))
+                time.sleep(0.001)
+                port.flush()
+        return
 
 img = np.zeros((1280, 720, 3))
 imgbytes = cv2.imencode(".png", img)[1].tobytes()
@@ -81,7 +88,8 @@ def main():
             [sg.Text("Set X: ", size=(10, 1)), sg.Input(size=(10, 1), key="setx", default_text = "0"), sg.Text("Set Y: ", size=(10, 1)), sg.Input(size=(10, 1), key="sety", default_text = "0"), sg.Text("Set Z: ", size=(10, 1)), sg.Input(size=(10, 1), key="setz", default_text = "0")],
             [sg.Text("Orientation"), sg.Input(size=(10, 1), key="orientation", default_text = "0")],
             [sg.Button("Confirm Coordinates"), sg.Button("Gripper")],
-            [sg.Button("Stop"), sg.Button("Home")]]
+            [sg.Button("Stop"), sg.Button("Home")],
+            [sg.Button("PresetA"), sg.Button("PresetB"), sg.Button("PresetC"),]]
 
 
     # 3rd attributes list
@@ -149,6 +157,9 @@ def main():
     port2 = serial.Serial(com_port2, baudrate=115200)
     port2.timeout = 0.5
     port2.inter_byte_timeout = 0.1
+    port2.stopbits = 1
+    port2.parity = 'N'
+
     if (port2.is_open == False):
         port2.open()
 
@@ -184,20 +195,21 @@ def main():
                 port2.write(bytes('#', 'UTF-8'))
                 port2.flush()
         elif event == "Home":
-                port2.write(bytes('h\n', 'UTF-8'))
+                port2.write(bytes('h\n\r', 'UTF-8'))
                 port2.flush()
                 print("Home Command sent")
         elif event == "Confirm Coordinates":
                 print("Moving to defined coordinates")
-                x = int(values["setx"])
-                y = int(values["sety"])
-                z = int(values["setz"])
+                x = float(values["setx"])
+                y = float(values["sety"])
+                z = float(values["setz"])
                 window["x"].update(str(x))
                 window["y"].update(str(y))
                 window["z"].update(str(z))
                 Orientation = int(values["orientation"])
                 Orientation = arm.AngleToOrientation(Orientation)
                 Position = (x, y, z)
+                
                 
                 Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
                 print(Joint1)
@@ -212,43 +224,135 @@ def main():
                 # Need to round to mm as the stepper firmware expects an int mm
                 print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
 
-                port2.write(bytes('2'+str(Joint2)+'\n', 'UTF-8'))
-                
-                time.sleep(0.2)
+                SendSerial(port2, '2'+str(Joint2)+'\n\r')
+                time.sleep(0.1)
                 print('2'+str(Joint2)+'\n')
-                port2.write(bytes('3'+str(Joint3)+'\n', 'UTF-8'))
-                time.sleep(0.2)
+                SendSerial(port2, '3'+str(Joint3)+'\n\r')
+                
+                time.sleep(0.1)
                 print('3'+str(Joint3)+'\n')
-                port2.write(bytes('4'+str(Joint4)+'\n', 'UTF-8'))
+                
+                SendSerial(port2, '4'+str(Joint4)+'\n\r')
                 print('4'+str(Joint4)+'\n')
-                time.sleep(0.2)
-                port2.write(bytes('Z'+str(round(Joint1))+'\n', 'UTF-8'))
-                port2.flush()
+                time.sleep(0.1)
+                
+                SendSerial(port2, 'Z'+str(round(Joint1))+'\n\r')
                 time.sleep(0.01)
-                msg = port2.read(1000)
-                print(msg)
+                # msg = port2.read(1000)
+                # print(msg)
 
         elif event == "Gripper":
                 gripperopen = not gripperopen
                 toggled = True
 
         if(gripperopen and toggled):
-                port2.write(bytes('G0\n\r', 'UTF-8'))
-                port2.flush()
-                time.sleep(0.01)
+                # port2.write(bytes('G0\n\r', 'UTF-8'))
+                SendSerial(port2, "G0\n\r")
                 print("Opening Gripper")
                 toggled = not toggled
         elif(not gripperopen and toggled):
-                port2.write(bytes('G180\n\r', 'UTF-8'))
-                port2.flush()
-                time.sleep(0.01)
+                # port2.write(bytes('G180\n\r', 'UTF-8'))
+                # port2.flush()
+                SendSerial(port2, "G180\n\r")
                 print("Closing Gripper")
                 toggled = not toggled
-
-
-
+        elif(event == "PresetA"):
+                Orientation = [[1.0, 0.0, 0], [-0.0, 1.0, 0], [0, 0, 1]]
+                Position = [775.0, 0.0, 300]
                 
+                
+                Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
+                print(Joint1)
+                Joint1 = arm.DistanceValidator(Joint1)
+                Joint2 = arm.AngleValidator(Joint2)
+                Joint3 = arm.AngleValidator(Joint3)
+                Joint4 = arm.AngleValidator(Joint4)
+                #convert invkine (-180º to 180º) angle to a servo angle (0º to 180º)
+                print("Servo 2 Move to: "+str(Joint2)+"º")
+                print("Servo 3 Move to: "+str(Joint3)+"º")
+                print("Servo 4 Move to: "+str(Joint4)+"º")
+                # Need to round to mm as the stepper firmware expects an int mm
+                print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
 
+                SendSerial(port2, '2'+str(Joint2)+'\n\r')
+                time.sleep(0.1)
+                print('2'+str(Joint2)+'\n')
+                SendSerial(port2, '3'+str(Joint3)+'\n\r')
+                
+                time.sleep(0.1)
+                print('3'+str(Joint3)+'\n')
+                
+                SendSerial(port2, '4'+str(Joint4)+'\n\r')
+                print('4'+str(Joint4)+'\n')
+                time.sleep(0.1)
+                
+                SendSerial(port2, 'Z'+str(round(Joint1))+'\n\r')
+                time.sleep(0.01)
+        elif(event == "PresetB"):
+                Orientation = [[0.0, 1.0000000000000002, 0], [-1.0000000000000002, 0.0, 0], [0, 0, 1]]
+                Position = [379.5584412271571, 544.5584412271571, 300]
+                
+                
+                Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
+                print(Joint1)
+                Joint1 = arm.DistanceValidator(Joint1)
+                Joint2 = arm.AngleValidator(Joint2)
+                Joint3 = arm.AngleValidator(Joint3)
+                Joint4 = arm.AngleValidator(Joint4)
+                #convert invkine (-180º to 180º) angle to a servo angle (0º to 180º)
+                print("Servo 2 Move to: "+str(Joint2)+"º")
+                print("Servo 3 Move to: "+str(Joint3)+"º")
+                print("Servo 4 Move to: "+str(Joint4)+"º")
+                # Need to round to mm as the stepper firmware expects an int mm
+                print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
+
+                SendSerial(port2, '2'+str(Joint2)+'\n\r')
+                time.sleep(0.1)
+                print('2'+str(Joint2)+'\n')
+                SendSerial(port2, '3'+str(Joint3)+'\n\r')
+                
+                time.sleep(0.1)
+                print('3'+str(Joint3)+'\n')
+                
+                SendSerial(port2, '4'+str(Joint4)+'\n\r')
+                print('4'+str(Joint4)+'\n')
+                time.sleep(0.1)
+                
+                SendSerial(port2, 'Z'+str(round(Joint1))+'\n\r')
+                time.sleep(0.01)
+        elif(event == "PresetC"):
+                Orientation = [[0.0, 1.0000000000000002, 0], [-1.0000000000000002, 0.0, 0], [0, 0, 1]]
+                Position = [379.5584412271571, 544.5584412271571, 250]
+                
+                
+                Joint1, Joint2, Joint3, Joint4 = arm.InvKine(Position, Orientation)
+                print(Joint1)
+                Joint1 = arm.DistanceValidator(Joint1)
+                Joint2 = arm.AngleValidator(Joint2)
+                Joint3 = arm.AngleValidator(Joint3)
+                Joint4 = arm.AngleValidator(Joint4)
+                #convert invkine (-180º to 180º) angle to a servo angle (0º to 180º)
+                print("Servo 2 Move to: "+str(Joint2)+"º")
+                print("Servo 3 Move to: "+str(Joint3)+"º")
+                print("Servo 4 Move to: "+str(Joint4)+"º")
+                # Need to round to mm as the stepper firmware expects an int mm
+                print("Stepper 1 Move to: "+str(round(Joint1))+"mm")
+
+                SendSerial(port2, '2'+str(Joint2)+'\n\r')
+                time.sleep(0.1)
+                print('2'+str(Joint2)+'\n')
+                SendSerial(port2, '3'+str(Joint3)+'\n\r')
+                
+                time.sleep(0.1)
+                print('3'+str(Joint3)+'\n')
+                
+                SendSerial(port2, '4'+str(Joint4)+'\n\r')
+                print('4'+str(Joint4)+'\n')
+                time.sleep(0.1)
+                
+                SendSerial(port2, 'Z'+str(round(Joint1))+'\n\r')
+                time.sleep(0.01)
+                
 
         if navigate and goal_set:
                 # create dot filter, dot is the blue dot on the robot
